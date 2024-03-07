@@ -528,7 +528,3 @@ whose name is typically determined by the name of the ordering itself.
 Having set our config file up, we can run our library properly by
 executing the executable file of SparseViz with the only argument
 pointing to the absolute path of the config file we have built.
-
-THINGS THAT HAVE BEEN FORGOTTEN TO BE MENTIONED IN THIS TUTORIAL ARE:
-
-TENSOR ACTIVE MODE EXPLANATION

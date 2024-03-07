@@ -10,4 +10,5 @@ nav:
       - Adding GPU Matrix Kernel: addingGPUMatrixKernel.md
       - Adding CPU Tensor Kernel: addingCPUTensorKernel.md
       - Adding GPU Tensor Kernel: addingGPUTensorKernel.md
+  - Licence: licence.md
 theme: readthedocs

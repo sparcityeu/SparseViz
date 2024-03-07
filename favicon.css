@@ -1,0 +1,5 @@
+/* favicon.css */
+link[rel="icon"] {
+    href: url('./favicon.ico');
+    type: "image/x-icon";
+}

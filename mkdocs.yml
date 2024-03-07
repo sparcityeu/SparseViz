@@ -1,0 +1,13 @@
+site_name: SparseViz
+site_url: https://sparcityeu.github.io/sparseviz/
+nav:
+  - Home: index.md
+  - Config File: configUse.md
+  - EXTENDING LIBRARY BEYOND:
+      - Adding Matrix Ordering: addingMatrixOrdering.md
+      - Adding Tensor Ordering: addingTensorOrdering.md
+      - Adding CPU Matrix Kernel: addingCPUMatrixKernel.md
+      - Adding GPU Matrix Kernel: addingGPUMatrixKernel.md
+      - Adding CPU Tensor Kernel: addingCPUTensorKernel.md
+      - Adding GPU Tensor Kernel: addingGPUTensorKernel.md
+theme: readthedocs

@@ -7,7 +7,9 @@
 #include "RCMOrdering.h"
 #include "BOBAOrdering.h"
 #include "DynaDegOrdering.h"
+#ifdef RABBIT_AVAILABLE
 #include "RabbitOrdering.h"
+#endif
 #include "SlashBurnOrdering.h"
 #include "PatohOrdering.h"
 #include "GrayOrdering.h"
@@ -61,8 +63,10 @@ void TensorKPartiteOrdering::orderingFunction()
         matrix_ordering = new AMDOrdering(*kpartite, "KPartite_AMD");
     } else if(m_OrderingType == "DYNADEG") {
         matrix_ordering = new DynaDegOrdering(*kpartite, "KPartite_DYNADEG", "");
+#ifdef RABBIT_AVAILABLE
     } else if(m_OrderingType == "RABBIT") {
         matrix_ordering = new RabbitOrdering(*kpartite, "KPartite_RABBIT");
+#endif
     } else if(m_OrderingType == "SBURN") {
         matrix_ordering = new SlashBurnOrdering(*kpartite, "KPartite_SBURN", "");
     } else if(m_OrderingType == "GRAY") {

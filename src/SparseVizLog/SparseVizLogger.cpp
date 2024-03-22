@@ -181,6 +181,7 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
 
     if (!m_TensorOrdering.empty())
     {
+        // First Line (Metrics)
         csvFile << "Operation: Tensor Ordering\n";
         unsigned long maxDim = 0;
         for (auto& logEntry : m_TensorOrdering)
@@ -194,11 +195,24 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         {
             csvFile << "Dimension: " << i << '\t';
         }
-        csvFile << "Tensor NNZ Count\tDuration\n";
-        for (const auto& logEntry : m_TensorOrdering)
+        csvFile << "Tensor NNZ Count\tDuration\t";
+        for (const auto& result: m_TensorOrderingResults[0])
         {
-            csvFile << logEntry << "\n";
+            csvFile << result.first << '\t';
         }
+        csvFile << '\n';
+
+        // Other Lines (Results)
+        for (size_t i = 0; i < m_TensorOrdering.size(); ++i)
+        {
+            csvFile << m_TensorOrdering[i] << '\t';
+            for (const auto& result: m_TensorOrderingResults[i])
+            {
+                csvFile << result.second.second << '\t';
+            }
+            csvFile << '\n';
+        }
+
         csvFile << "\n";
     }
 
@@ -368,7 +382,6 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
 
     if (!m_Others.empty())
     {
-        // Section for ExplicitLogs
         csvFile << "Section devoted for explicit logs\n";
         for (const auto& other: m_Others)
         {
@@ -541,7 +554,7 @@ void SparseVizLogger::logWritingTensorBinary(SparseTensor *tensor, double durati
     }
 }
 
-void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duration)
+void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duration, SparseVizPerformance* perf)
 {
 #pragma omp critical
     {
@@ -558,6 +571,10 @@ void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duratio
         logString += std::to_string(ordering->getTensor().getNNZCount()) + '\t' + std::to_string(duration);
 
         m_TensorOrdering.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
+
+        perf->calculateResults();
+        const SparseVizPerformance::Results results = perf->getResults();
+        m_TensorOrderingResults.push_back(results);
     }
 }
 
@@ -654,14 +671,17 @@ void SparseVizLogger::logRunningMatrixKernel(const KernelResult& kernelResult, M
 
 void SparseVizLogger::logRunningGPUMatrixKernel(const GPUKernelResult &kernelResult, MatrixOrdering *ordering)
 {
-    double averageTimeTook = 0;
-    for (int i = 0; i != kernelResult.durations.size(); ++i)
+#pragma omp critical
     {
-        averageTimeTook += kernelResult.durations[i];
-    }
-    averageTimeTook /= kernelResult.durations.size();
+        double averageTimeTook = 0;
+        for (int i = 0; i != kernelResult.durations.size(); ++i)
+        {
+            averageTimeTook += kernelResult.durations[i];
+        }
+        averageTimeTook /= kernelResult.durations.size();
 
-    std::cout << "[GPU] " << kernelResult.kernelName << " on " << ordering->getMatrix().getName() << " with " << ordering->getOrderingName() << ": took " << averageTimeTook << " seconds on average." << std::endl;
+        std::cout << "[GPU] " << kernelResult.kernelName << " on " << ordering->getMatrix().getName() << " with " << ordering->getOrderingName() << ": took " << averageTimeTook << " seconds on average." << std::endl;
+    }
 }
 
 void SparseVizLogger::logRunningTensorKernel(const KernelResult& kernelResult, TensorOrdering* ordering)
@@ -697,14 +717,17 @@ void SparseVizLogger::logRunningTensorKernel(const KernelResult& kernelResult, T
 
 void SparseVizLogger::logRunningGPUTensorKernel(const GPUKernelResult &kernelResult, TensorOrdering *ordering)
 {
-    double averageTimeTook = 0;
-    for (int i = 0; i != kernelResult.durations.size(); ++i)
+#pragma omp critical
     {
-        averageTimeTook += kernelResult.durations[i];
-    }
-    averageTimeTook /= kernelResult.durations.size();
+        double averageTimeTook = 0;
+        for (int i = 0; i != kernelResult.durations.size(); ++i)
+        {
+            averageTimeTook += kernelResult.durations[i];
+        }
+        averageTimeTook /= kernelResult.durations.size();
 
-    std::cout << "[GPU] " << kernelResult.kernelName << " on " << ordering->getTensor().getName() << " with " << ordering->getOrderingName() << ": took " << averageTimeTook << " seconds on average." << std::endl;
+        std::cout << "[GPU] " << kernelResult.kernelName << " on " << ordering->getTensor().getName() << " with " << ordering->getOrderingName() << ": took " << averageTimeTook << " seconds on average." << std::endl;
+    }
 }
 
 void SparseVizLogger::logMatrixProcessing(const std::string &filename, const Statistic &stat, double duration)

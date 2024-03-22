@@ -7,6 +7,8 @@
 #include "helpers.h"
 #include <string.h>
 #include "SparseVizIO.h"
+#include "SparseVizPerformance.h"
+
 
 TensorOrdering::TensorOrdering(SparseTensor &tensor,  const std::vector<vType>& active_modes, std::string orderingName, unsigned int orderingFunctionPrice)
 :   tensor(tensor),
@@ -64,12 +66,23 @@ void TensorOrdering::generateOrdering(bool writeOrdering)
 {
     if (!USE_EXISTING_ORDERINGS || !this->readOrdering())
     {
+
+        std::vector<BenchmarkSettings> settings = getSettings();
+        SparseVizPerformance* perf = new SparseVizPerformance(settings.data(), settings.size());
+
         double start_time = omp_get_wtime();
+
+        perf->activatePerf();
         this->orderingFunction();
+        perf->deactivatePerf();
+
         this->checkPermutationCorrectness();
+
         double end_time = omp_get_wtime();
 
-        logger.logTensorOrdering(this, end_time - start_time);
+        logger.logTensorOrdering(this, end_time - start_time, perf);
+
+        delete perf;
 
         if(writeOrdering && EXPORT_ORDERINGS)
         {

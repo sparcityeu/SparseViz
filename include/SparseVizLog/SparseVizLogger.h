@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include "SparseVizPerformance.h"
 
 class SparseMatrix;
 class MatrixOrdering;
@@ -32,7 +33,7 @@ public:
     void logReadingTensorMarket(SparseTensor* tensor, double duration);
     void logReadingTensorBinary(SparseTensor* tensor, double duration);
     void logWritingTensorBinary(SparseTensor* tensor, double duration);
-    void logTensorOrdering(TensorOrdering* ordering, double duration);
+    void logTensorOrdering(TensorOrdering* ordering, double duration, SparseVizPerformance* perf);
     void logReadingTensorOrdering(TensorOrdering* ordering, double duration);
     void logWritingTensorOrdering(TensorOrdering* ordering, double duration);
     void logConstructingOrderedTensor(TensorOrdering* ordering, double duration);
@@ -71,6 +72,7 @@ private:
     std::vector<std::string> m_ReadingTensorBinary;
     std::vector<std::string> m_WritingTensorBinary;
     std::vector<std::string> m_TensorOrdering;
+    std::vector<SparseVizPerformance::Results> m_TensorOrderingResults;
     std::vector<std::string> m_ReadingTensorOrdering;
     std::vector<std::string> m_WritingTensorOrdering;
     std::vector<std::string> m_ConstructingOrderedTensor;

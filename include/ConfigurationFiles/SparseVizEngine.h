@@ -25,7 +25,7 @@
 #include "DynaDegOrdering.h"
 #include "MinDegOrdering.h"
 #include "TensorNaturalOrdering.h"
-#include "TensorKPartiteOrdering.h"
+#include "COOKPartiteOrdering.h"
 #ifdef RABBIT_AVAILABLE
 #include "RabbitOrdering.h"
 #endif
@@ -41,7 +41,8 @@
 // Tensor Kernels
 #include "TensorKernelFunction.h"
 #include "COOTensorKernel.h"
-
+#include "MTTKRP.h"
+// Cuda Needed
 #ifdef CUDA_ENABLED
 #include "MatrixGPUKernel.h"
 #include "TensorGPUKernel.h"
@@ -166,8 +167,9 @@ public:
      * @param chunkSize OMP chunk size.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
+     * @param orderingParameters Ordering parameters given to the ordering class constructor, typically not splitted and expected to be done so in the ordering constructor.
      */
-    void addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore);
+    void addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters);
 
 #ifdef CUDA_ENABLED
     /*!
@@ -287,7 +289,7 @@ private:
      * @param nIgnore Number of times the initial executions are desired to be ignored.
      * @return TensorKernelFunction abstract class from which every custom tensor kernel class in the SparseViz ecosystem is derived.
      */
-    TensorKernelFunction* tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore);
+    TensorKernelFunction* tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters);
 
 #ifdef CUDA_ENABLED
     /*!

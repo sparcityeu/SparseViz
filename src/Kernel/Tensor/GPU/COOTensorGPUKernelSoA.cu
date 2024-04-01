@@ -1,13 +1,17 @@
 #include "COOTensorGPUKernelSoA.h"
 #include "GPUKernels.cuh"
 #include "cuda_runtime.h"
+#include "SparseTensorCOO.h"
+#include "helpers.h"
 
 bool COOTensorGPUKernelSoA::init(const SparseTensor &A)
-{        
+{
+    const SparseTensorCOO& tensorCOO = *getCOOFormat(&A);
+
     h_output = 0.0;
-    h_nonzeros = A.getStorage();
+    h_nonzeros = tensorCOO.getStorage();
     dims = A.getDims();
-    nnzcount = A.getNNZCount();
+    nnzcount = tensorCOO.getNNZ();
     order = A.getOrder();
 
     vType* dim_offsets = new vType[order + 1];

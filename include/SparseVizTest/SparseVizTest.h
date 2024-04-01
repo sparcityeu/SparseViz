@@ -42,7 +42,7 @@ public:
     void runTests(unsigned totalTestNo);
 
     void logTest(const std::string& log);
-    std::string getCurrentDirectory() const {return m_CurrentDirectory;}
+    [[maybe_unused]] [[nodiscard]]  std::string getCurrentDirectory() const {return m_CurrentDirectory;}
 
 private:
     explicit SparseVizTest(): m_CurrentLogFile(nullptr), m_CurrentTestNo(0) {}

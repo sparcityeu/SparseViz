@@ -2,29 +2,24 @@
 #include <omp.h>
 
 
-SparseMatrix::SparseMatrix(std::string name, vType r, vType c, std::vector<Nonzero> &nonzeros)
+SparseMatrix::SparseMatrix(std::string name, vType r, vType c, eType nnz, vType* storage, valType* values)
 :   m_Name(name),
     m_Row(r),
     m_Col(c),
-    m_NNZCount(nonzeros.size()),
+    m_NNZCount(nnz),
+    m_Values(values),
     m_OrderingSupportedMatrix(nullptr)
 {
-    /*
-     * Creates SparseMatrix by reading nonzero vector
-     */
-
     m_Ptr = new vType[m_Row + 1];
     memset(m_Ptr, 0, sizeof(vType) * (m_Row + 1));
 
     m_Ind = new vType[m_NNZCount];
 
-    m_Values = new valType[m_NNZCount];
-
-    for (vType i = 0; i < nonzeros.size(); ++i)
+    for (vType i = 0; i < nnz; ++i)
     {
-        ++m_Ptr[nonzeros[i].row + 1];
-        m_Ind[i] = nonzeros[i].column;
-        m_Values[i] = nonzeros[i].value;
+        eType nnzStart = i * 2;
+        ++m_Ptr[storage[nnzStart] + 1];
+        m_Ind[i] = storage[nnzStart + 1];
     }
 
     for (vType i = 0; i < m_Row; ++i)
@@ -33,8 +28,6 @@ SparseMatrix::SparseMatrix(std::string name, vType r, vType c, std::vector<Nonze
     }
 
     this->checkProperties(false);
-
-    nonzeros.clear();
 }
 
 SparseMatrix::SparseMatrix(std::string name, vType r, vType c, vType nnzCount, vType *ptrs, vType *ids, valType *vals)

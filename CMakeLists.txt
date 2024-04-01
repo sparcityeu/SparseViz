@@ -28,7 +28,7 @@ include_directories(include/Kernel/Matrix/GPU)
 include_directories(include/Kernel/Tensor)
 include_directories(include/Kernel/Tensor/CPU)
 include_directories(include/Kernel/Tensor/GPU)
-include_directories(include/Testing)
+include_directories(include/SparseVizTest)
 include_directories(include/SparseVizLog)
 include_directories(include/SparseVizPerformance)
 include_directories(include/IO)
@@ -48,7 +48,7 @@ include_directories(src/Kernel/Matrix/GPU)
 include_directories(src/Kernel/Tensor)
 include_directories(src/Kernel/Tensor/CPU)
 include_directories(src/Kernel/Tensor/GPU)
-include_directories(src/Testing)
+include_directories(src/SparseVizTest)
 include_directories(src/SparseVizLog)
 include_directories(src/SparseVizPerformance)
 include_directories(src/IO)
@@ -78,11 +78,9 @@ set(HEADER_FILES
         include/Matrix/Orderings/AMDOrdering.h
         include/Tensor/Base/SparseTensor.h
         include/Matrix/Base/MatrixMarketIOLibrary.h
-        include/Matrix/Base/Nonzero.h
-        include/Tensor/Base/Nonzero3D.h
         include/Tensor/Orderings/TensorOrdering.h
         include/Tensor/Orderings/TensorNaturalOrdering.h
-        include/Tensor/Orderings/TensorKPartiteOrdering.h
+        include/Tensor/Orderings/COOKPartiteOrdering.h
         include/Tensor/Visualization/TensorVisualizer.h
         include/Kernel/Matrix/CPU/MatrixKernelFunction.h
         include/Kernel/Tensor/CPU/TensorKernelFunction.h
@@ -98,8 +96,13 @@ set(HEADER_FILES
         include/Kernel/Matrix/CPU/Dijkstra.h
         include/Kernel/Matrix/CPU/Bellman_Ford.h
         include/Kernel/Matrix/CPU/Floyd_Warshall.h
-        include/Testing/SparseVizTest.h
+        include/SparseVizTest/SparseVizTest.h
         include/SparseVizPerformance/SparseVizPerformance.h
+        include/Tensor/Base/SparseTensorCOO.h
+        include/Tensor/Base/SparseTensorCSF.h
+        include/Tensor/Base/SparseTensorHICOO.h
+        include/Kernel/Tensor/CPU/MTTKRP.h
+        include/sort.h
 )
 
 set(SOURCE_FILES
@@ -125,7 +128,7 @@ set(SOURCE_FILES
         src/Tensor/Base/SparseTensor.cpp
         src/Tensor/Orderings/TensorOrdering.cpp
         src/Tensor/Orderings/TensorNaturalOrdering.cpp
-        src/Tensor/Orderings/TensorKPartiteOrdering.cpp
+        src/Tensor/Orderings/COOKPartiteOrdering.cpp
         src/Tensor/Visualization/TensorVisualizer.cpp
         src/Kernel/Matrix/CPU/MatrixKernelFunction.cpp
         src/Kernel/Tensor/CPU/TensorKernelFunction.cpp
@@ -139,11 +142,16 @@ set(SOURCE_FILES
         src/Kernel/Matrix/CPU/Dijkstra.cpp
         src/Kernel/Matrix/CPU/Bellman_Ford.cpp
         src/Kernel/Matrix/CPU/Floyd_Warshall.cpp
-        src/Testing/SparseVizTest.cpp
+        src/SparseVizTest/SparseVizTest.cpp
         src/SparseVizPerformance/SparseVizPerformance.cpp
+        src/Tensor/Base/SparseTensorCOO.cpp
+        src/Tensor/Base/SparseTensorCSF.cpp
+        src/Tensor/Base/SparseTensorHICOO.cpp
+        src/Kernel/Tensor/CPU/MTTKRP.cpp
+        src/sort.cpp
 )
 
-file(READ " -- YOUR CONFIG FILE TO GET PROJECT INFO -- " configContent)
+file(READ "/home/users/deniz/sparseviz/deniz_tensor_config" configContent)
 string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
 set(rabbitLicence ${CMAKE_MATCH_1})
 string(STRIP ${rabbitLicence} rabbitLicence)
@@ -183,6 +191,6 @@ add_executable(SparseViz
 )
 
 target_link_libraries(SparseViz ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_cusparse_LIBRARY})
-target_link_libraries(SparseViz --YOUR_PATOH_LIBRARY_FOLDER--/libpatoh.a)
-target_link_libraries(SparseViz --YOUR_AMD_BUILD_FOLDER--/libamd.a)
+target_link_libraries(SparseViz /home/users/deniz/sparseviz/lib/libpatoh.a)
+target_link_libraries(SparseViz /home/users/deniz/sparseviz/lib/libamd.a)
 target_link_libraries(SparseViz libnuma.a)

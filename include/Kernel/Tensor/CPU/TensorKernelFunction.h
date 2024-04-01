@@ -14,7 +14,7 @@ class TensorKernelFunction
 {
 public:
     TensorKernelFunction(const std::string& kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore)
-            :   kernelName(kernelName), threadCounts(threadCounts), schedulingPolicy(schedulingPolicy), chunkSize(chunkSize), nRun(nRun), nIgnore(nIgnore) {}
+    :   kernelName(kernelName), threadCounts(threadCounts), schedulingPolicy(schedulingPolicy), chunkSize(chunkSize), nRun(nRun), nIgnore(nIgnore) {}
 
     virtual ~TensorKernelFunction() = default;
     KernelResult operator()(const SparseTensor& A);

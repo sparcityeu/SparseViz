@@ -16,12 +16,8 @@
 #include <omp.h>
 
 
-void countSort(std::vector< std::pair<unsigned, unsigned> >& inputArray, unsigned* permutation);
 vType calculateBin(vType coordinate, vType dimSize, vType numBins);
 std::string escapeSingleQuote(const std::string &input);
-void convertCOOtoCSR_CSC(int *coords, float *values, int nnz, int dimX, int dimY,
-                         int *rowPtr, int *colInd, float *sortedValues,
-                         int *colPtr, int *rowInd);
 std::string calculateColorscale(bool is_exponential, bool is_red);
 void trim(std::string &s);
 std::vector<std::string> split(const std::string &s, char delimiter);
@@ -44,5 +40,10 @@ struct pair_hash
         return (pair.first >= pair.second) ? (pair.first * pair.first + pair.first + pair.second) : (pair.second * pair.second + pair.first);
     }
 };
+
+class SparseTensorCOO;
+SparseTensorCOO* getCOOFormat(SparseTensor* tensor);
+const SparseTensorCOO* getCOOFormat(const SparseTensor* tensor);
+
 
 #endif //SPARSEVIZ_HELPERS_H

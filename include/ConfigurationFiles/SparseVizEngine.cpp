@@ -1,9 +1,9 @@
 #include "SparseVizEngine.h"
-#include "helpers.h"
 #include "MatrixVisualizer.h"
 #include "TensorVisualizer.h"
 #include "SparseVizLogger.h"
 #include "SparseVizIO.h"
+
 
 SparseVizEngine::~SparseVizEngine()
 {
@@ -64,7 +64,8 @@ void SparseVizEngine::runEngine()
         this->runGPUMatrixKernels();
 #endif
         #pragma omp parallel for schedule(dynamic,1)
-        for (int i = 0; i < matrixOrderingPermutations.size(); ++i) {
+        for (int i = 0; i < matrixOrderingPermutations.size(); ++i)
+        {
             auto iter = matrixOrderingPermutations.begin();
             advance(iter, i);
             visualizeMatrixOrderings(iter->second.data(), iter->second.size());
@@ -80,7 +81,8 @@ void SparseVizEngine::runEngine()
         this->runGPUMatrixKernels();
 #endif
         #pragma omp parallel for schedule(dynamic,1)
-        for (int i = 0; i < matrixPermutations.size(); ++i) {
+        for (int i = 0; i < matrixPermutations.size(); ++i)
+        {
             auto iter = matrixPermutations.begin();
             advance(iter, i);
             visualizeMatrices(iter->second.data(), iter->second.size());
@@ -123,7 +125,8 @@ void SparseVizEngine::runEngine()
                 visualizeTensors(iter->second.data(), iter->second.size());
             }
         }
-    } else if (ZOO_TYPE == "FULLTENSOR")
+    }
+    else if (ZOO_TYPE == "FULLTENSOR")
     {
         std::unordered_map<std::string, std::vector<TensorOrdering*>> tensorPermutations = this->getTensorPermutations();
         this->runTensorKernels();
@@ -138,7 +141,8 @@ void SparseVizEngine::runEngine()
                 auto iter = tensorPermutations.begin();
                 advance(iter, i);
                 #pragma omp parallel for schedule(dynamic, 1)
-                for(int j = 0; j < iter->second.size(); j++) {
+                for(int j = 0; j < iter->second.size(); j++)
+                {
                     visualizeFullSparseTensor(iter->second.data()[j]);    
                 }      
             }
@@ -208,8 +212,10 @@ void SparseVizEngine::addTensorOrdering(const std::string& orderingClassName, co
 {
     for (const auto& tensor: m_Tensors)
     {
-        if(zooType == "TENS" || zooType == "TENSORD") {
-            for(const auto& active_modes : tensor.active_modes) {
+        if(zooType == "TENS" || zooType == "TENSORD")
+        {
+            for(const auto& active_modes : tensor.active_modes)
+            {
                 TensorOrdering* orderingClass = tensorOrderingFactory(*tensor.tensor, active_modes, orderingClassName, orderingName, orderingParameters);
                 if (orderingClass == nullptr)
                 {
@@ -219,19 +225,25 @@ void SparseVizEngine::addTensorOrdering(const std::string& orderingClassName, co
                 }
                 m_TensorOrderings.push_back(orderingClass);
             }
-        } else if(zooType == "FULLTENSOR") {
+        }
+        else if(zooType == "FULLTENSOR")
+        {
             std::vector<vType> active_modes;
-            for(int i = 0; i < ((tensor).tensor)->getOrder(); i++) {
+            for(int i = 0; i < ((tensor).tensor)->getOrder(); i++)
+            {
                 active_modes.push_back(i);
             }
             TensorOrdering* orderingClass = tensorOrderingFactory(*tensor.tensor, active_modes, orderingClassName, orderingName, orderingParameters);
-             if (orderingClass == nullptr) {
+             if (orderingClass == nullptr)
+             {
                 std::cout << "SKIPPING ORDERING: " << orderingName << std::endl;
                 std::cout << orderingClassName << " is not found in your available ordering set." << std::endl;
                 continue;
-            }
-            m_TensorOrderings.push_back(orderingClass);
-        } else {
+             }
+             m_TensorOrderings.push_back(orderingClass);
+        }
+        else
+        {
             throw std::runtime_error("Unknown zoo type: " + zooType);
         }
     }
@@ -283,9 +295,9 @@ void SparseVizEngine::addGPUTensorKernel(const std::string &kernelName, const st
 }
 #endif
 
-void SparseVizEngine::addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore)
+void SparseVizEngine::addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters)
 {
-    TensorKernelFunction* kernel = this->tensorKernelFactory(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
+    TensorKernelFunction* kernel = this->tensorKernelFactory(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore, orderingParameters);
 
     if (!kernel)
     {
@@ -334,7 +346,7 @@ void SparseVizEngine::runMatrixKernels()
             }
             else
             {
-                SparseMatrix matrix = orderingPtr->getMatrix();
+                const SparseMatrix& matrix = orderingPtr->getMatrix();
                 for (auto& kernel: m_MatrixKernels)
                 {
                     KernelResult result = (*kernel)(matrix);
@@ -388,7 +400,7 @@ void SparseVizEngine::runGPUMatrixKernels()
             }
             else
             {
-                SparseMatrix matrix = orderingPtr->getMatrix();
+                const SparseMatrix& matrix = orderingPtr->getMatrix();
                 for (auto& kernel: m_MatrixGPUKernels)
                 {
                     GPUKernelResult result = (*kernel)(matrix);
@@ -443,7 +455,7 @@ void SparseVizEngine::runGPUTensorKernels()
             }
             else
             {
-                SparseTensor tensor = orderingPtr->getTensor();
+                const SparseTensor& tensor = orderingPtr->getTensor();
                 for (auto& kernel: m_TensorGPUKernels)
                 {
                     GPUKernelResult result = (*kernel)(tensor);
@@ -508,7 +520,7 @@ void SparseVizEngine::runTensorKernels()
             }
             else
             {
-                SparseTensor tensor = orderingPtr->getTensor();
+                const SparseTensor& tensor = orderingPtr->getTensor();
                 for (auto& kernel: m_TensorKernels)
                 {
                     KernelResult result = (*kernel)(tensor);
@@ -581,11 +593,15 @@ MatrixGPUKernel *SparseVizEngine::matrixGPUKernelFactory(const std::string &kern
 }
 #endif
 
-TensorKernelFunction *SparseVizEngine::tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore)
-{    
-    if (kernelName == "COOTensorKernel")
+TensorKernelFunction *SparseVizEngine::tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters)
+{
+    if (kernelName == "COOTensorKernel" && TENSOR_STORAGE_TYPE == COO)
     {
         return new COOTensorKernel(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
+    }
+    else if (kernelName == "MTTKRP")
+    {
+        return new MTTKRP(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore, orderingParameters);
     }
     return nullptr;
 }
@@ -593,15 +609,17 @@ TensorKernelFunction *SparseVizEngine::tensorKernelFactory(const std::string &ke
 #ifdef CUDA_ENABLED
 TensorGPUKernel *SparseVizEngine::tensorGPUKernelFactory(const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, int nRun, int nIgnore)
 {
-    if (kernelName == "COOTensorGPUKernelSoA") {
+    if (kernelName == "COOTensorGPUKernelSoA" && TENSOR_STORAGE_TYPE == COO)
+    {
         return new COOTensorGPUKernelAoS(kernelName, gridSizes, blockSizes, nRun, nIgnore);
-    } else if (kernelName == "COOTensorGPUKernelAoS") {
+    }
+    else if (kernelName == "COOTensorGPUKernelAoS" && TENSOR_STORAGE_TYPE == COO)
+    {
         return new COOTensorGPUKernelSoA(kernelName, gridSizes, blockSizes, nRun, nIgnore);
     }
     return nullptr;
 }
 #endif
-
 
 MatrixOrdering *SparseVizEngine::matrixOrderingFactory(SparseMatrix& matrix, std::string orderingClassName, std::string orderingName, std::string orderingParameters)
 {
@@ -662,7 +680,7 @@ TensorOrdering *SparseVizEngine::tensorOrderingFactory(SparseTensor &tensor, con
     }
     else if (orderingClassName == "KPartite")
     {
-        return new TensorKPartiteOrdering(tensor, active_modes, orderingName, orderingParameters);
+        return new COOKPartiteOrdering(tensor, active_modes, orderingName, orderingParameters);
     }
     return nullptr;
 }

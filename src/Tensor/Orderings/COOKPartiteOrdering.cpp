@@ -2,31 +2,33 @@
 // Created on 9/15/23.
 //
 
-#include "TensorKPartiteOrdering.h"
+#include "COOKPartiteOrdering.h"
 #include "MatrixOrdering.h"
 #include "RCMOrdering.h"
 #include "BOBAOrdering.h"
 #include "DynaDegOrdering.h"
-#ifdef RABBIT_AVAILABLE
-#include "RabbitOrdering.h"
-#endif
 #include "SlashBurnOrdering.h"
 #include "PatohOrdering.h"
 #include "GrayOrdering.h"
 #include "AMDOrdering.h"
+#ifdef RABBIT_AVAILABLE
+#include "RabbitOrdering.h"
+#endif
+#include "SparseTensorCOO.h"
 #include <unordered_set>
-
 #include <cstring>
 #include <iostream>
-#include <fstream>
 
-omp_lock_t TensorKPartiteOrdering::kpartite_lock;
-std::unordered_map<std::string, SparseMatrix*> TensorKPartiteOrdering::kpartite_matrices;
-std::unordered_map<std::string, omp_lock_t*> TensorKPartiteOrdering::kpartite_locks;
 
-void TensorKPartiteOrdering::orderingFunction()
+omp_lock_t COOKPartiteOrdering::kpartite_lock;
+std::unordered_map<std::string, SparseMatrix*> COOKPartiteOrdering::kpartite_matrices;
+std::unordered_map<std::string, omp_lock_t*> COOKPartiteOrdering::kpartite_locks;
+
+
+void COOKPartiteOrdering::orderingFunction()
 {
-    if (orderedDimensions) {
+    if (orderedDimensions)
+    {
         return;
     }
      
@@ -34,46 +36,55 @@ void TensorKPartiteOrdering::orderingFunction()
     const vType* dims = tensor.getDims();
 
     orderedDimensions = new vType*[tensor_order];
-    for (int i = 0; i != tensor_order; ++i) {
+    for (int i = 0; i != tensor_order; ++i)
+    {
         orderedDimensions[i] = new vType[dims[i]];
     } 
     
     SparseMatrix* kpartite = getKPartite();
     std::string fname = tensor.getName();
-    for(const vType& m : active_modes) {
+    for(const vType& m : active_modes)
+    {
         fname += "_" + std::to_string(m);
     }
 
-    /*std::ofstream myfile;
-    myfile.open (fname + "_KPartite.mtx");
-    myfile << "%%MatrixMarket matrix coordinate real general\n";
-    myfile << kpartite->getRowCount() << " " << kpartite->getColCount() << " " << kpartite->getNNZCount() << "\n";
-    for(vType v = 0; v < kpartite->getRowCount(); v++) {
-        for(vType ptr = kpartite->getPtr()[v]; ptr < kpartite->getPtr()[v+1]; ptr++) {
-             myfile << v + 1 << " " << kpartite->getInd()[ptr] + 1 << "\n";
-        }
-    }
-    myfile.close();*/
     MatrixOrdering* matrix_ordering;
-    if(m_OrderingType == "RCM") {
+    if(m_OrderingType == "RCM")
+    {
         matrix_ordering = new RCMOrdering(*kpartite, "KPartite_RCM", "");
-    } else if(m_OrderingType == "BOBA") {
+    }
+    else if(m_OrderingType == "BOBA")
+    {
         matrix_ordering = new BOBAOrdering(*kpartite, "KPartite_BOBA", "");
-    } else if(m_OrderingType == "AMD") {
+    }
+    else if(m_OrderingType == "AMD")
+    {
         matrix_ordering = new AMDOrdering(*kpartite, "KPartite_AMD");
-    } else if(m_OrderingType == "DYNADEG") {
+    }
+    else if(m_OrderingType == "DYNADEG")
+    {
         matrix_ordering = new DynaDegOrdering(*kpartite, "KPartite_DYNADEG", "");
+    }
 #ifdef RABBIT_AVAILABLE
-    } else if(m_OrderingType == "RABBIT") {
+    else if(m_OrderingType == "RABBIT")
+    {
         matrix_ordering = new RabbitOrdering(*kpartite, "KPartite_RABBIT");
+    }
 #endif
-    } else if(m_OrderingType == "SBURN") {
+    else if(m_OrderingType == "SBURN")
+    {
         matrix_ordering = new SlashBurnOrdering(*kpartite, "KPartite_SBURN", "");
-    } else if(m_OrderingType == "GRAY") {
+    }
+    else if(m_OrderingType == "GRAY")
+    {
         matrix_ordering = new GrayOrdering(*kpartite, "KPartite_GRAY", "");
-    } else if(m_OrderingType == "PATOH") {
+    }
+    else if(m_OrderingType == "PATOH")
+    {
         matrix_ordering = new PatohOrdering(*kpartite, "KPartite_PATOH", "8/CN/UNIT/CUT/END/RCM");
-    } else {
+    }
+    else
+    {
        throw std::runtime_error("Unknown ordering type " + m_OrderingType + " for KPartite!");
     }
 
@@ -85,7 +96,8 @@ void TensorKPartiteOrdering::orderingFunction()
     const vType* rowIPermutation = matrix_ordering->getRowIPermutation();
 
     vType* rowPermutation = new vType[kpartite->getRowCount()];
-    for(vType i = 0; i < kpartite->getRowCount(); i++) {
+    for(vType i = 0; i < kpartite->getRowCount(); i++)
+    {
         rowPermutation[rowIPermutation[i]] = i;
     }
 
@@ -96,38 +108,45 @@ void TensorKPartiteOrdering::orderingFunction()
 
     vType* v_counts = new vType[active_modes.size()];
     memset(v_counts, 0, sizeof(vType) * active_modes.size());
-    for(vType i = 0; i < kpartite->getRowCount(); i++) {
+    for(vType i = 0; i < kpartite->getRowCount(); i++)
+    {
         vType v = rowPermutation[i];
-        for(int j = 0; j < active_modes.size(); j++) {
-            if(v >= offsets[j] && v < offsets[j+1]) {
+        for(int j = 0; j < active_modes.size(); j++)
+        {
+            if(v >= offsets[j] && v < offsets[j+1])
+            {
                 orderedDimensions[active_modes[j]][v - offsets[j]] = v_counts[j]++;
             }
         }
     }
-    delete [] offsets;
-    delete [] v_counts;
+
+    delete[] offsets;
+    delete[] v_counts;
     delete matrix_ordering;
-    delete [] rowPermutation;
+    delete[] rowPermutation;
 }
 
-SparseMatrix* TensorKPartiteOrdering::getKPartite()
+SparseMatrix* COOKPartiteOrdering::getKPartite()
 {
     std::string key = tensor.getName();
-    for(const vType& m : active_modes) {
+    for(const vType& m : active_modes)
+    {
         key += "_" + std::to_string(m);
     }
 
     omp_set_lock(&kpartite_lock);
-    std::unordered_map<std::string, omp_lock_t*>::const_iterator got_lock = kpartite_locks.find (key);
-    if (got_lock == kpartite_locks.end()) {
+    std::unordered_map<std::string, omp_lock_t*>::const_iterator got_lock = kpartite_locks.find(key);
+    if (got_lock == kpartite_locks.end())
+    {
         kpartite_locks[key] = new omp_lock_t;
         omp_init_lock(kpartite_locks[key]);
     }
     omp_unset_lock(&kpartite_lock);
 
     omp_set_lock(kpartite_locks[key]);
-    std::unordered_map<std::string, SparseMatrix*>::const_iterator got_matrix = kpartite_matrices.find (key);
-    if(got_matrix == kpartite_matrices.end()) {
+    std::unordered_map<std::string, SparseMatrix*>::const_iterator got_matrix = kpartite_matrices.find(key);
+    if(got_matrix == kpartite_matrices.end())
+    {
         kpartite_matrices[key] = generateKPartiteMatrix(key);
     }
     omp_unset_lock(kpartite_locks[key]);
@@ -135,37 +154,47 @@ SparseMatrix* TensorKPartiteOrdering::getKPartite()
     return kpartite_matrices[key];
 }
 
-SparseMatrix* TensorKPartiteOrdering::generateKPartiteMatrix(std::string name) {
+SparseMatrix* COOKPartiteOrdering::generateKPartiteMatrix(std::string name)
+{
     SparseMatrix* kpartite_matrix = nullptr;
     
     std::unordered_set<vpair, pair_hash> nnz_set;
     vType matrix_dim = 0;
     vType* offsets = new vType[active_modes.size() + 1];
-   
-    const int tensor_order = tensor.getOrder();
-    const vType* tensor_dims = tensor.getDims();
-    const vType nnzcount = tensor.getNNZCount();
-    const vType* storage = tensor.getStorage();
+
+    const SparseTensorCOO& tensorCOO = *getCOOFormat(&tensor);
+
+    const vType tensor_order = tensorCOO.getOrder();
+    const vType* tensor_dims = tensorCOO.getDims();
+    const vType nnzcount = tensorCOO.getNNZ();
+    const vType* storage = tensorCOO.getStorage();
 
     offsets[0] = 0;
-    for(int i = 0; i < active_modes.size(); i++) {
+    for(int i = 0; i < active_modes.size(); i++)
+    {
         matrix_dim += tensor_dims[active_modes[i]];
         offsets[i + 1] = tensor_dims[active_modes[i]];
     }
 
-    for(int i = 2; i <= active_modes.size(); i++) {
+    for(int i = 2; i <= active_modes.size(); i++)
+    {
         offsets[i] += offsets[i - 1];
     }   
     
     double start_time = omp_get_wtime();
     int count = 0;
-    for(vType nnz = 0; nnz < nnzcount; nnz++) {
+    for(vType nnz = 0; nnz < nnzcount; nnz++)
+    {
         const vType* nnz_ids = storage + (nnz * tensor_order);
-        for(int i = 0; i < active_modes.size(); i++) {
-            if((offsets[i + 1] - offsets[i]) >= (matrix_dim / 100)) {
+        for(int i = 0; i < active_modes.size(); i++)
+        {
+            if((offsets[i + 1] - offsets[i]) >= (matrix_dim / 100))
+            {
                 vType id_i = nnz_ids[active_modes[i]] + offsets[i];
-                for(int j = i + 1; j < active_modes.size(); j++) {
-                    if((offsets[j + 1] - offsets[j]) >= (matrix_dim / 100)) {
+                for(int j = i + 1; j < active_modes.size(); j++)
+                {
+                    if((offsets[j + 1] - offsets[j]) >= (matrix_dim / 100))
+                    {
                         vType id_j = nnz_ids[active_modes[j]] + offsets[j];
                         nnz_set.insert(vpair(id_i, id_j)); 
                         count += 1; 
@@ -201,8 +230,10 @@ SparseMatrix* TensorKPartiteOrdering::generateKPartiteMatrix(std::string name) {
     eType* temp_ptrs = new eType[matrix_dim + 1];
     memcpy(temp_ptrs, ptrs, sizeof(eType) * (matrix_dim + 1));
     vType* ids = new vType[matrix_nnz];
-    for(vType v = 0; v < matrix_dim; v++) {
-        for (eType e = ptrs[v]; e < ptrs[v+1]; e++) {
+    for(vType v = 0; v < matrix_dim; v++)
+    {
+        for (eType e = ptrs[v]; e < ptrs[v+1]; e++)
+        {
             ids[temp_ptrs[temp_ids[e]]++] = v;
         }
     }

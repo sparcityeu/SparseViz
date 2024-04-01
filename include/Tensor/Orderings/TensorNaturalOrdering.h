@@ -8,12 +8,13 @@
 #include "TensorOrdering.h"
 #include <string>
 
+
 class TensorNaturalOrdering: public TensorOrdering
 {
 public:
     TensorNaturalOrdering(SparseTensor& tensor, const std::vector<vType>& active_modes, std::string orderingName)
-        : TensorOrdering(tensor, active_modes, orderingName) {
-
+        : TensorOrdering(tensor, active_modes, orderingName)
+        {
             
         }
 

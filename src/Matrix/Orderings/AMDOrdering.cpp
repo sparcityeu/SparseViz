@@ -1,18 +1,20 @@
-                                                                                                                                                                                        
 #include "AMDOrdering.h"
 #include "Parameters.h"
 #include <vector>
 #include <algorithm>
 #include <amd.h>
 
-void AMDOrdering::orderingFunction() {
+
+void AMDOrdering::orderingFunction()
+{
     int n = this->getMatrix().getRowCount();
     const int* ptrs = (const int*) this->getMatrix().getPtr();
     const int* ids = (const int*) this->getMatrix().getInd();
 
     rowIPermutation = new unsigned[n];
     colIPermutation = new unsigned[n];
-    for(int i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++)
+    {
         rowIPermutation[i] = colIPermutation[i] = i;
     }
 
@@ -28,13 +30,16 @@ void AMDOrdering::orderingFunction() {
             status = amd_order(n, r_ptrs, r_ids, i_order,  (double *) NULL, (double *) NULL);
         }
     }
-    if(status == AMD_OK) {
-        for (unsigned i = 0; i < n; i++) {
+    if(status == AMD_OK)
+    {
+        for (unsigned i = 0; i < n; i++)
+        {
             rowIPermutation[i_order[i]] = colIPermutation[i_order[i]] = i;
         }
-    } else {
+    }
+    else
+    {
         logger.makeSilentLog("AMD is failed on " + this->getMatrix().getName());
         throw std::logic_error("AMD is failed on " + this->getMatrix().getName());
     }
-
 }

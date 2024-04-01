@@ -61,7 +61,7 @@ public:
     void activatePerf();
     void deactivatePerf();
     void calculateResults();
-    const Results& getResults() const;
+    [[maybe_unused]] [[nodiscard]] const Results& getResults() const;
 
 private:
     static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);

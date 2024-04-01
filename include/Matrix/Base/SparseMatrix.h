@@ -10,7 +10,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
-#include "Nonzero.h"
 
 
 /*!
@@ -25,10 +24,12 @@ public:
      * @param name The name of the SparseMatrix.
      * @param r Row count.
      * @param c Col count.
-     * @param nonzeros Array of nonzeros.
+     * @param nnz Number of nonzeros
+     * @param storage Array of coordinates with a layout as: r1,c1,r2,c2.
+     * @param values Array of values corresponding to each nonzero in the storage array.
      * @warning In order for the construction to be done properly, the nonzeros should be sorted in the order of increasing rows.
      */
-    SparseMatrix(std::string name, vType r, vType c, std::vector<Nonzero>& nonzeros);
+    SparseMatrix(std::string name, vType r, vType c, eType nnz, vType* storage, valType* values);
 
     /*!
      * @brief Constructs SparseMatrix object from 3 arrays required to represent compressed matrix structure.
@@ -179,29 +180,29 @@ public:
     void checkShape();
 
     // Read-Only Getters
-    std::string getName() const {return m_Name;}
-    vType getRowCount() const {return m_Row;}
-    vType getColCount() const {return m_Col;}
-    vType getNNZCount() const {return m_NNZCount;}
-    bool isSymmetric() const {return m_IsSymmetric;}
-    bool isPatternSymmetric() const {return m_IsPatternSymmetric;}
-    bool isSquare() const {return m_IsSquare;}
-    vType* getPtr() const {return m_Ptr;}
-    vType* getInd() const {return m_Ind;}
-    valType* getValues() const {return m_Values;}
+    [[maybe_unused]] [[nodiscard]] inline std::string getName() const {return m_Name;}
+    [[maybe_unused]] [[nodiscard]] inline vType getRowCount() const {return m_Row;}
+    [[maybe_unused]] [[nodiscard]] inline vType getColCount() const {return m_Col;}
+    [[maybe_unused]] [[nodiscard]] inline vType getNNZCount() const {return m_NNZCount;}
+    [[maybe_unused]] [[nodiscard]] inline bool isSymmetric() const {return m_IsSymmetric;}
+    [[maybe_unused]] [[nodiscard]] inline bool isPatternSymmetric() const {return m_IsPatternSymmetric;}
+    [[maybe_unused]] [[nodiscard]] inline bool isSquare() const {return m_IsSquare;}
+    [[maybe_unused]] [[nodiscard]] inline vType* getPtr() const {return m_Ptr;}
+    [[maybe_unused]] [[nodiscard]] inline vType* getInd() const {return m_Ind;}
+    [[maybe_unused]] [[nodiscard]] inline valType* getValues() const {return m_Values;}
 
     // Read-Write Getters
-    std::string& getName() {return m_Name;}
-    vType& getRowCount() {return m_Row;}
-    vType& getColCount() {return m_Col;}
-    vType& getNNZCount() {return m_NNZCount;}
-    bool& isSymmetric() {return m_IsSymmetric;}
-    bool& isPatternSymmetric() {return m_IsPatternSymmetric;}
-    bool& isSquare() {return m_IsSquare;}
-    vType*& getPtr() {return m_Ptr;}
-    vType*& getInd() {return m_Ind;}
-    valType*& getValues() {return m_Values;}
-    SparseMatrix*& getOrderingSupportedMatrix() {return m_OrderingSupportedMatrix;}
+    [[maybe_unused]] [[nodiscard]] inline std::string& getName() {return m_Name;}
+    [[maybe_unused]] [[nodiscard]] inline vType& getRowCount() {return m_Row;}
+    [[maybe_unused]] [[nodiscard]] inline vType& getColCount() {return m_Col;}
+    [[maybe_unused]] [[nodiscard]] inline vType& getNNZCount() {return m_NNZCount;}
+    [[maybe_unused]] [[nodiscard]] inline bool& isSymmetric() {return m_IsSymmetric;}
+    [[maybe_unused]] [[nodiscard]] inline bool& isPatternSymmetric() {return m_IsPatternSymmetric;}
+    [[maybe_unused]] [[nodiscard]] inline bool& isSquare() {return m_IsSquare;}
+    [[maybe_unused]] [[nodiscard]] inline vType*& getPtr() {return m_Ptr;}
+    [[maybe_unused]] [[nodiscard]] inline vType*& getInd() {return m_Ind;}
+    [[maybe_unused]] [[nodiscard]] inline valType*& getValues() {return m_Values;}
+    [[maybe_unused]] [[nodiscard]] inline SparseMatrix*& getOrderingSupportedMatrix() {return m_OrderingSupportedMatrix;}
 
 private:
     /*!

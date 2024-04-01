@@ -495,8 +495,8 @@ void SparseVizLogger::logReadingTensorMarket(SparseTensor *tensor, double durati
             std::cout << dims[tensor->getOrder() - 1];
             logString += std::to_string(dims[tensor->getOrder() - 1]) + '\t';
         }
-        std::cout << " tensor with " << tensor->getNNZCount() << " nonzeros from the market file took " << duration << " seconds." << std::endl;
-        logString += std::to_string(tensor->getNNZCount()) + '\t' + std::to_string(duration);
+        std::cout << " tensor with " << tensor->getNNZ() << " nonzeros from the market file took " << duration << " seconds." << std::endl;
+        logString += std::to_string(tensor->getNNZ()) + '\t' + std::to_string(duration);
 
         m_ReadingTensorMarket.push_back(std::to_string(tensor->getOrder()) + '|' + logString);
     }
@@ -521,8 +521,8 @@ void SparseVizLogger::logReadingTensorBinary(SparseTensor *tensor, double durati
             std::cout << dims[tensor->getOrder() - 1];
             logString += std::to_string(dims[tensor->getOrder() - 1]) + '\t';
         }
-        std::cout << " tensor with " << tensor->getNNZCount() << " nonzeros from the binary file took " << duration << " seconds." << std::endl;
-        logString += std::to_string(tensor->getNNZCount()) + '\t' + std::to_string(duration);
+        std::cout << " tensor with " << tensor->getNNZ() << " nonzeros from the binary file took " << duration << " seconds." << std::endl;
+        logString += std::to_string(tensor->getNNZ()) + '\t' + std::to_string(duration);
 
         m_ReadingTensorBinary.push_back(std::to_string(tensor->getOrder()) + '|' + logString);
     }
@@ -547,8 +547,8 @@ void SparseVizLogger::logWritingTensorBinary(SparseTensor *tensor, double durati
             std::cout << dims[tensor->getOrder() - 1];
             logString += std::to_string(dims[tensor->getOrder() - 1]) + '\t';
         }
-        std::cout << " tensor with " << tensor->getNNZCount() << " nonzeros to a binary file took " << duration << " seconds." << std::endl;
-        logString += std::to_string(tensor->getNNZCount()) + '\t' + std::to_string(duration);
+        std::cout << " tensor with " << tensor->getNNZ() << " nonzeros to a binary file took " << duration << " seconds." << std::endl;
+        logString += std::to_string(tensor->getNNZ()) + '\t' + std::to_string(duration);
 
         m_WritingTensorBinary.push_back(std::to_string(tensor->getOrder()) + '|' + logString);
     }
@@ -568,7 +568,7 @@ void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duratio
         {
             logString += std::to_string(dims[i]) + '\t';
         }
-        logString += std::to_string(ordering->getTensor().getNNZCount()) + '\t' + std::to_string(duration);
+        logString += std::to_string(ordering->getTensor().getNNZ()) + '\t' + std::to_string(duration);
 
         m_TensorOrdering.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
 
@@ -592,7 +592,7 @@ void SparseVizLogger::logReadingTensorOrdering(TensorOrdering *ordering, double 
         {
             logString += std::to_string(dims[i]) + '\t';
         }
-        logString += std::to_string(ordering->getTensor().getNNZCount()) + '\t' + std::to_string(duration);
+        logString += std::to_string(ordering->getTensor().getNNZ()) + '\t' + std::to_string(duration);
 
         m_ReadingTensorOrdering.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
     }
@@ -612,7 +612,7 @@ void SparseVizLogger::logWritingTensorOrdering(TensorOrdering *ordering, double 
         {
             logString += std::to_string(dims[i]) + '\t';
         }
-        logString += std::to_string(ordering->getTensor().getNNZCount()) + '\t' + std::to_string(duration);
+        logString += std::to_string(ordering->getTensor().getNNZ()) + '\t' + std::to_string(duration);
 
         m_WritingTensorOrdering.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
     }
@@ -632,7 +632,7 @@ void SparseVizLogger::logConstructingOrderedTensor(TensorOrdering* ordering, dou
         {
             logString += std::to_string(dims[i]) + '\t';
         }
-        logString += std::to_string(ordering->getTensor().getNNZCount()) + '\t' + std::to_string(duration);
+        logString += std::to_string(ordering->getTensor().getNNZ()) + '\t' + std::to_string(duration);
 
         m_ConstructingOrderedTensor.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
     }

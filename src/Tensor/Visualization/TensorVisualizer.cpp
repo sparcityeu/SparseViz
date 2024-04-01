@@ -11,6 +11,7 @@
 #include "TensorVisualizer.h"
 #include "SparseVizLogger.h"
 #include "SparseVizTest.h"
+#include "SparseTensorCOO.h"
 
 using namespace std;
 
@@ -220,7 +221,7 @@ std::string stat_to_html_table(const TensorOrdering &o, const TStatistic &stat)
 void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     double start_time = omp_get_wtime();
 
-    const SparseTensor &tensor = orderings[0]->getTensor();
+    const SparseTensorCOO &tensor = *getCOOFormat(&orderings[0]->getTensor());
     const std::vector<vType>& active_modes = orderings[0]->getActiveModes();
 
     std::string filename = tensor.getName();
@@ -231,8 +232,8 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     const int tensor_order = tensor.getOrder();
     const vType* full_dims = tensor.getDims();
     const vType* nonzeros = tensor.getStorage();
-    const valType* values = tensor.getWeights();
-    const vType nnzCount = tensor.getNNZCount();
+    const valType* values = tensor.getValues();
+    const vType nnzCount = tensor.getNNZ();
 
     logger.makeSilentLog( "visualizeTensorOrderings is started for " + filename);
 
@@ -1139,15 +1140,15 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 {    
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
-    { 
-        const SparseTensor &tensor = orderings[n]->getTensor();
+    {
+        const SparseTensorCOO &tensor = *getCOOFormat(&orderings[n]->getTensor());
         const std::vector<vType>& active_modes = orderings[n]->getActiveModes();
 
         const int tensor_order = tensor.getOrder();
         const vType* full_dims = tensor.getDims();
         const vType* nonzeros = tensor.getStorage();
-        const valType* values = tensor.getWeights();
-        const vType nnzCount = tensor.getNNZCount();
+        const valType* values = tensor.getValues();
+        const vType nnzCount = tensor.getNNZ();
 
         for(int i = 0; i < 3; i++) {
             dims[n][i] = full_dims[active_modes[i]];
@@ -1423,7 +1424,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
         }
         stats[n].geo_mean_nnz = stats[n].geo_mean_nnz / (stats[n].no_bins - stats[n].no_empty_bins);
         stats[n].geo_mean_nnz = exp(stats[n].geo_mean_nnz);
-        stats[n].mean_nnz = (double(orderings[n]->getTensor().getNNZCount())) / (stats[n].no_bins - stats[n].no_empty_bins);
+        stats[n].mean_nnz = (double(orderings[n]->getTensor().getNNZ())) / (stats[n].no_bins - stats[n].no_empty_bins);
        
         vector<vector<int>> *sums[3] = {&topDownSum, &sideSum, &tubeSum};
         vector<vector<int>> *totalValuesArrays[] = {&topDownTotalValues, &sideTotalValues, &tubeTotalValues};
@@ -1439,7 +1440,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
         html_file << "<div style='writing-mode: vertical-rl; display:flex; justify-content:center; text-align: center; align-items:center; transform: "
                      "rotate(180deg); margin-left:20px; margin-right: 10px;'>\n";
         html_file << "<h2>Tensor: " << orderings[n]->getTensor().getName() << " - mods(" << std::to_string(orderings[n]->getActiveModes()[0]) << ", " << std::to_string(orderings[n]->getActiveModes()[1]) << ", " << std::to_string(orderings[n]->getActiveModes()[2]) << ")"  
-         << "<br>\n(dims: " << std::to_string(dims[n][0]) << " x  " << std::to_string(dims[n][1]) << " x  " << std::to_string(dims[n][2]) << ")" << "<br>\n(nnz: " << std::to_string(orderings[n]->getTensor().getNNZCount()) << ")</h3>\n";
+         << "<br>\n(dims: " << std::to_string(dims[n][0]) << " x  " << std::to_string(dims[n][1]) << " x  " << std::to_string(dims[n][2]) << ")" << "<br>\n(nnz: " << std::to_string(orderings[n]->getTensor().getNNZ()) << ")</h3>\n";
         html_file << "</div>\n";
         html_file << "<div style='display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;'>\n";
 
@@ -2029,15 +2030,15 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
 {    
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
-    { 
-        const SparseTensor &tensor = ordering->getTensor();
+    {
+        const SparseTensorCOO &tensor = *getCOOFormat(&ordering->getTensor());
         const std::vector<vType>& active_modes = active_modes_s[n];
 
         const int tensor_order = tensor.getOrder();
         const vType* full_dims = tensor.getDims();
         const vType* nonzeros = tensor.getStorage();
-        const valType* values = tensor.getWeights();
-        const vType nnzCount = tensor.getNNZCount();
+        const valType* values = tensor.getValues();
+        const vType nnzCount = tensor.getNNZ();
 
         for(int i = 0; i < 3; i++) {
             dims[n][i] = full_dims[active_modes[i]];
@@ -2234,7 +2235,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
         html_file << " x " << ordering->getTensor().getDims()[i];
      }
      html_file <<  "</h3>";
-    html_file << "<h3 class=\"title-sub\">Nonzeros: " << ordering->getTensor().getNNZCount() << "</h3>";
+    html_file << "<h3 class=\"title-sub\">Nonzeros: " << ordering->getTensor().getNNZ() << "</h3>";
 
     html_file << "</div>\n"; // Close right header div
     html_file << "</div>\n"; // Close header div
@@ -2319,7 +2320,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
         }
         stats[n].geo_mean_nnz = stats[n].geo_mean_nnz / (stats[n].no_bins - stats[n].no_empty_bins);
         stats[n].geo_mean_nnz = exp(stats[n].geo_mean_nnz);
-        stats[n].mean_nnz = (double(ordering->getTensor().getNNZCount())) / (stats[n].no_bins - stats[n].no_empty_bins);
+        stats[n].mean_nnz = (double(ordering->getTensor().getNNZ())) / (stats[n].no_bins - stats[n].no_empty_bins);
        
         vector<vector<int>> *sums[3] = {&topDownSum, &sideSum, &tubeSum};
         vector<vector<int>> *totalValuesArrays[] = {&topDownTotalValues, &sideTotalValues, &tubeTotalValues};

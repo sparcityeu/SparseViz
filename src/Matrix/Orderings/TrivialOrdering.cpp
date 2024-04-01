@@ -7,6 +7,7 @@
 #include "Parameters.h"
 #include "helpers.h"
 #include <cstdlib>
+#include "sort.h"
 
 
 TrivialOrdering::TrivialOrdering(SparseMatrix &matrix, std::string orderingName, std::string orderingParameters)

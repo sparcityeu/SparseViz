@@ -24,6 +24,9 @@ std::string CHART_TYPE = "-1";
 unsigned int MAX_DIM = 64;
 std::string TEST_DIRECTORY = "/home/users/kaya/SparseViz/TestFiles/";
 std::string TEST_CONFIG = TEST_DIRECTORY + "template_test_file";
+TensorType TENSOR_STORAGE_TYPE;
+BlockType BLOCK_SIZE;
+u_int8_t SB_BITS;
 
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
@@ -177,7 +180,6 @@ void ConfigFileReader::readConfigFile()
 
 SparseVizEngine *ConfigFileReader::instantiateEngine()
 {
-
     this->readConfigFile();
     m_Engine = new SparseVizEngine();
 
@@ -330,6 +332,47 @@ void ConfigFileReader::readSetting(const std::string& line)
         catch (const std::invalid_argument &e)
         {
             throw std::runtime_error("Invalid format for MAX_DIM");
+        }
+    }
+    else if (lineSplitted[0] == "TENSOR_STORAGE_TYPE")
+    {
+        if (lineSplitted[1] == "COO")
+        {
+            TENSOR_STORAGE_TYPE = COO;
+        }
+        else if (lineSplitted[1] == "CSF")
+        {
+            TENSOR_STORAGE_TYPE = CSF;
+        }
+        else if (lineSplitted[1] == "HiCOO")
+        {
+            TENSOR_STORAGE_TYPE = HiCOO;
+        }
+        else
+        {
+            throw std::runtime_error("TENSOR_STORAGE_TYPE must be one of the following types: COO, CSF, HiCOO");
+        }
+    }
+    else if (lineSplitted[0] == "BLOCK_SIZE")
+    {
+        try
+        {
+            BLOCK_SIZE = std::stoi(lineSplitted[1]);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for BLOCK_SIZE");
+        }
+    }
+    else if (lineSplitted[0] == "SB_BITS")
+    {
+        try
+        {
+            SB_BITS = std::stoi(lineSplitted[1]);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for SB_BITS");
         }
     }
 }
@@ -503,6 +546,7 @@ void ConfigFileReader::readMatrixKernel(const std::string &line)
 void ConfigFileReader::readTensorKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
+    std::string kernelParameters = "";
 
     int chunkSize, nRun, nIgnore;
     try
@@ -547,7 +591,12 @@ void ConfigFileReader::readTensorKernel(const std::string &line)
         }
     }
 
-    m_Engine->addTensorKernel(lineSplitted[0], threadCounts, lineSplitted[2], chunkSize, nRun, nIgnore);
+    if (lineSplitted.size() >= 7)
+    {
+        kernelParameters = lineSplitted[6];
+    }
+
+    m_Engine->addTensorKernel(lineSplitted[0], threadCounts, lineSplitted[2], chunkSize, nRun, nIgnore, kernelParameters);
 }
 
 #ifdef CUDA_ENABLED

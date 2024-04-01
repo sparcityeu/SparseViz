@@ -7,6 +7,7 @@
 
 #include "TensorGPUKernel.h"
 
+
 class COOTensorGPUKernelAoS: public TensorGPUKernel
 {
 public:
@@ -29,5 +30,6 @@ private:
     eType nnzcount;
     int order;
 };
+
 
 #endif //SPARSEVIZ_COOGPUTENSORKERNELAOS_H

@@ -1,0 +1,47 @@
+K add gpu kernel support for tensor html table
+K add gpu kernel
+
+D Parallelize time-consuming IO operations
+{
+    Matrix IO
+    Matrix Binary IO:
+    Tensor IO: [COMPLETED]
+    Tensor Binary IO: [COMPLETED]
+    Matrix Ordering IO:
+    Tensor Ordering IO: [COMPLETED]
+}
+D Simple GPU kernel
+{
+    MATRIX: [COMPLETED]
+    TENSOR: [COMPLETED]
+}
+D implementation of matricize pure functions for csf and hicoo
+D SparseVizLog -> GPU Kernel LOG
+D SparseVizLog -> FullSparseTensor Log
+D making TIMING_LOG to work as expected (should only have an effect on terminal logging not csv)
+
+Future work --------------------------------------------
+D/K: Parallel CPU/GPU ordering of the matrices
+D: Testing
+D .ord extension for plaintext (external) ordering
+K/S add GORDER
+K add new RCM-jaccard sparsification
+K use bipartite graphs for rectangular, unsymmetric matrices in addition (or inplace of A+A')
+K add matrix Maxi-BFS
+K add tensor Maxi-BFS
+K/D add matrix lexi ordering
+K/D add tensor lexi ordering
+K/D adding eType
+K/D add COO to CSF conversion to tensor for CSF-based kernels
+K add METIS orderings (similar to PATOH with inner)
+K add cpu tensor kernels
+K add gpu tensor kernels
+K active modes is not vType - simple int
+D/K add cpu affinity support
+D/K add gpu grid/block auto multi/dimension support
+D/K add [CPU] in front of cpu kernel log
+K go over all existing for efficiency kernels
+K dimensions in tensor file should not be necessary
+K python binding
+K matlab binding
+D SparseVizLogger -> right align all numbers and set 3 precision for doubles (Kamer Hoca Slack Note)

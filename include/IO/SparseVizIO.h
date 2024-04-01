@@ -6,9 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
-#include "Nonzero3D.h"     //Q: Do we really need this? - I thought 3D read is gone
-#include "Nonzero.h"
-#include "pigo.hpp"
+#include "config.h"
 
 
 class SparseMatrix;
@@ -179,16 +177,6 @@ public:
      * @see SparseTensor::generateOrderedTensor
      */
     static void writeOrderedTensorToBinaryFile(SparseTensor* tensor);
-
-private:
-    /*!
-     * @brief Sorts the nonzero vector in the Row, Column ascending order.
-     * @param row Row range.
-     * @param column Column range.
-     * @param nonzeros Nonzero vector to be sorted.
-     * @details Works in linear time.
-     */
-    static void sortVector(int row, int column, std::vector<Nonzero>& nonzeros);
 };
 
 

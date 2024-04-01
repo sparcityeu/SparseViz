@@ -11,11 +11,15 @@
 #include <stdexcept>
 #include "omp.h"
 #include "SparseVizLogger.h"
+#include <cstdint>
 
 
 typedef unsigned int vType; //!< Vertex data type to be used throughout the program.
 typedef unsigned int eType; //!< Edge data type to be used throughout the program.
 typedef double valType; //!< Value/Weight data type to be used throughout the program.
+typedef unsigned int BlockType; //!< Block index data type to be used in HiCOO tensor representation.
+typedef u_int8_t OffsetType; //!< Offset index data type to be used in HiCOO tensor representation.
+typedef unsigned __int128 MortonIndex; //!< Morton index data type to be used during morton sorting.
 
 class SparseMatrix;
 class SparseTensor;
@@ -40,9 +44,19 @@ extern std::string FAVICON_PATH;    //!< Favicon path of the html.
 extern std::string ZOO_TYPE;    //!< Determines the active ZOO_TYPE.
 extern std::string CHART_TYPE; //!< Determines the chart_type visualization files are generated with.
 extern unsigned int MAX_DIM;    //!< Maximum dimension that can be seen in the visualization files | Default = 64.
-// #define TEST
 extern std::string TEST_CONFIG;
 extern std::string TEST_DIRECTORY;
+// #define TEST
+
+enum TensorType
+{
+    COO,
+    CSF,
+    HiCOO
+};
+extern TensorType TENSOR_STORAGE_TYPE;
+extern BlockType BLOCK_SIZE;
+extern u_int8_t SB_BITS;
 
 /*!
  * @brief ConfigFileReader is a class that is responsible for reading, parsing, and processing the config file and initializing the SparseVizEngine based on it.

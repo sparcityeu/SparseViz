@@ -155,7 +155,7 @@ void TensorOrdering::calculateOrderingPrice(unsigned int orderingFunctionPrice)
     const double dimensionBaseFactor = 0.001;
     const vType* dims = this->getTensor().getDims();
 
-    double nnzPrice = log(this->getTensor().getNNZCount() + 1) * nnzBaseFactor;
+    double nnzPrice = log(this->getTensor().getNNZ() + 1) * nnzBaseFactor;
     double dimensionPrice = 0;
     for (int i = 0; i != tensor.getOrder(); ++i)
     {

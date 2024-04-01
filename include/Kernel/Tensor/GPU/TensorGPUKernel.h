@@ -14,7 +14,7 @@ class TensorGPUKernel
 {
 public:
     TensorGPUKernel(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore)
-            :   kernelName(kernelName), gridSizes(gridSizes), blockSizes(blockSizes), nRun(nRun), nIgnore(nIgnore) {}
+    :   kernelName(kernelName), gridSizes(gridSizes), blockSizes(blockSizes), nRun(nRun), nIgnore(nIgnore) {}
 
     virtual ~TensorGPUKernel() = default;
     GPUKernelResult operator()(const SparseTensor& A);

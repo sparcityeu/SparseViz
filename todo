@@ -45,3 +45,9 @@ K dimensions in tensor file should not be necessary
 K python binding
 K matlab binding
 D SparseVizLogger -> right align all numbers and set 3 precision for doubles (Kamer Hoca Slack Note)
+K Extract features, kernel specific shap (Explainability) analysis and visualization
+K Graph Hypergraph partitioniong, clustering visualization (multilevel for scalability)
+K Error distribution for tensor decomposition
+K Embedding - PCA - 3d visuzliation threejs
+K Add vertex names and other metadata for graph visualization
+K Add tensor dimension names for tensor visualization

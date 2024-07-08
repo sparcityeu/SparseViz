@@ -4,8 +4,8 @@ SparseViz s a library built in C++ that orders and visualizes sparse data struct
 
 The library is still in early stages of development. As a result, it may not stable and likely to change in the near future.
 
-:rocket: [Installation & Basic Usage](https://sparcityeu.github.io/sparseviz/start/)
+:rocket: [Installation & Basic Usage](https://sparcityeu.github.io/SparseViz/)
 
-:books: [Documentation](https://sparcityeu.github.io/sparseviz/)
+:books: [Documentation](https://sparcityeu.github.io/SparseViz/)
 
-:scroll: [License](https://sparcityeu.github.io/sparseviz/license/)
+:scroll: [License](https://sparcityeu.github.io/SparseViz/licence/)

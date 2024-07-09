@@ -41,10 +41,10 @@ void Floyd_Warshall::preprocess(const SparseMatrix &A)
         delete[] dists;
     }
 
-    dists = new unsigned*[vertexCount];
+    dists = new valType*[vertexCount];
     for (vType i = 0; i != vertexCount; ++i)
     {
-        dists[i] = new unsigned[vertexCount];
+        dists[i] = new valType[vertexCount];
     }
 
     for (vType s = 0; s != vertexCount; ++s)
@@ -57,7 +57,7 @@ void Floyd_Warshall::preprocess(const SparseMatrix &A)
         for (vType neighbour = ptrs[s]; neighbour != ptrs[s + 1]; ++neighbour)
         {
             vType d = inds[neighbour];
-            unsigned w = vals[neighbour];
+            valType w = vals[neighbour];
 
             dists[s][d] = w;
         }

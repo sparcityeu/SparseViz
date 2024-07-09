@@ -12,14 +12,14 @@ GPUKernelResult MatrixGPUKernel::operator()(const SparseMatrix& A)
     std::vector<double> durations;
     if (this->init(A))
     {
-        for (int i = 0; i != gridSizes.size(); ++i)
+        for (int i = 0; i < gridSizes.size(); ++i)
         {
             double total = 0;
-            for (int r = 0; r != nRun; ++r)
+            for (int r = 0; r < nRun; ++r)
             {
                 this->preprocess(A);
                 double start = omp_get_wtime();
-                this->hostFunction(A, r, gridSizes[i], blockSizes[i]);
+                this->hostFunction(A, r, gridSizes[i], blockSizes[i], sharedMemorySizes[i]);
                 double end = omp_get_wtime();
 
                 if(r >= nIgnore)
@@ -35,5 +35,5 @@ GPUKernelResult MatrixGPUKernel::operator()(const SparseMatrix& A)
             durations.push_back(duration);
         }
     }
-    return {kernelName, gridSizes, blockSizes, durations};
+    return {kernelName, gridSizes, blockSizes, sharedMemorySizes, durations};
 }

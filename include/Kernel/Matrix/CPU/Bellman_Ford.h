@@ -20,7 +20,7 @@ public:
 
 public:
     vType singleSource;
-    unsigned* dists;
+    valType* dists;
 
 private:
     const vType* ptrs;

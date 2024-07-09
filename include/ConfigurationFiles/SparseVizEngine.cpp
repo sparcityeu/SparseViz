@@ -36,20 +36,6 @@ SparseVizEngine::~SparseVizEngine()
     {
         delete kernelPointer;
     }
-
-#ifdef CUDA_ENABLED
-    for (const auto& kernelPointer: m_MatrixGPUKernels)
-    {
-        delete kernelPointer;
-    }
-#endif
-
-#ifdef CUDA_ENABLED
-    for (const auto& kernelPointer: m_TensorGPUKernels)
-    {
-        delete kernelPointer;
-    }
-#endif
 }
 
 void SparseVizEngine::runEngine()
@@ -264,9 +250,9 @@ void SparseVizEngine::addMatrixKernel(const std::string &kernelName, const std::
 }
 
 #ifdef CUDA_ENABLED
-void SparseVizEngine::addGPUMatrixKernel(const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, int nRun, int nIgnore)
+void SparseVizEngine::addGPUMatrixKernel(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore)
 {
-    MatrixGPUKernel* kernel = this->matrixGPUKernelFactory(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    MatrixGPUKernel* kernel = this->matrixGPUKernelFactory(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelParameters, nRun, nIgnore);
 
     if (!kernel)
     {
@@ -280,9 +266,9 @@ void SparseVizEngine::addGPUMatrixKernel(const std::string &kernelName, const st
 #endif
 
 #ifdef CUDA_ENABLED
-void SparseVizEngine::addGPUTensorKernel(const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, int nRun, int nIgnore)
+void SparseVizEngine::addGPUTensorKernel(const std::string& kernelClassName, const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore)
 {
-    TensorGPUKernel* kernel = this->tensorGPUKernelFactory(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    TensorGPUKernel* kernel = this->tensorGPUKernelFactory(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelParameters, nRun, nIgnore);
 
     if (!kernel)
     {
@@ -295,9 +281,9 @@ void SparseVizEngine::addGPUTensorKernel(const std::string &kernelName, const st
 }
 #endif
 
-void SparseVizEngine::addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters)
+void SparseVizEngine::addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& kernelParameters)
 {
-    TensorKernelFunction* kernel = this->tensorKernelFactory(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore, orderingParameters);
+    TensorKernelFunction* kernel = this->tensorKernelFactory(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore, kernelParameters);
 
     if (!kernel)
     {
@@ -410,6 +396,7 @@ void SparseVizEngine::runGPUMatrixKernels()
                     }
                     orderingPtr->pushGPUKernelResult(result);
                     logger.logRunningGPUMatrixKernel(result, orderingPtr);
+                    delete kernel;
                 }
             }
         }
@@ -465,6 +452,7 @@ void SparseVizEngine::runGPUTensorKernels()
                     }
                     orderingPtr->pushGPUKernelResult(result);
                     logger.logRunningGPUTensorKernel(result, orderingPtr);
+                    delete kernel;
                 }
             }
         }
@@ -579,43 +567,35 @@ MatrixKernelFunction *SparseVizEngine::matrixKernelFactory(const std::string &ke
 }
 
 #ifdef CUDA_ENABLED
-MatrixGPUKernel *SparseVizEngine::matrixGPUKernelFactory(const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, int nRun, int nIgnore)
+MatrixGPUKernel *SparseVizEngine::matrixGPUKernelFactory(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore)
 {
-    if (kernelName == "CudaHelloWorld")
+    if (kernelClassName == "JackardWeights")
     {
-        return new CudaHelloWorld(kernelName, gridSizes, blockSizes, nRun, nIgnore);
-    }
-    else if (kernelName == "SPMVRowBased")
-    {
-        return new GPUSpmvRowBased(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+        return new JackardWeights(kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelParameters, nRun, nIgnore);
     }
     return nullptr;
 }
 #endif
 
-TensorKernelFunction *SparseVizEngine::tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& orderingParameters)
+TensorKernelFunction *SparseVizEngine::tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string &schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& kernelParameters)
 {
     if (kernelName == "COOTensorKernel" && TENSOR_STORAGE_TYPE == COO)
     {
         return new COOTensorKernel(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
     }
-    else if (kernelName == "MTTKRP")
-    {
-        return new MTTKRP(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore, orderingParameters);
-    }
     return nullptr;
 }
 
 #ifdef CUDA_ENABLED
-TensorGPUKernel *SparseVizEngine::tensorGPUKernelFactory(const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, int nRun, int nIgnore)
+TensorGPUKernel *SparseVizEngine::tensorGPUKernelFactory(const std::string& kernelClassName, const std::string &kernelName, const std::vector<int> &gridSizes, const std::vector<int> &blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore)
 {
-    if (kernelName == "COOTensorGPUKernelSoA" && TENSOR_STORAGE_TYPE == COO)
+    if (kernelClassName == "COOTensorGPUKernelSoA" && TENSOR_STORAGE_TYPE == COO)
     {
-        return new COOTensorGPUKernelAoS(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+        return new COOTensorGPUKernelAoS(kernelName, gridSizes, blockSizes, sharedMemorySizes, nRun, nIgnore);
     }
-    else if (kernelName == "COOTensorGPUKernelAoS" && TENSOR_STORAGE_TYPE == COO)
+    else if (kernelClassName == "COOTensorGPUKernelAoS" && TENSOR_STORAGE_TYPE == COO)
     {
-        return new COOTensorGPUKernelSoA(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+        return new COOTensorGPUKernelSoA(kernelName, gridSizes, blockSizes, sharedMemorySizes, nRun, nIgnore);
     }
     return nullptr;
 }

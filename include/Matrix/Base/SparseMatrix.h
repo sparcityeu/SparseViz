@@ -10,6 +10,8 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+#include "omp.h"
+#include <memory>
 
 
 /*!
@@ -190,6 +192,7 @@ public:
     [[maybe_unused]] [[nodiscard]] inline vType* getPtr() const {return m_Ptr;}
     [[maybe_unused]] [[nodiscard]] inline vType* getInd() const {return m_Ind;}
     [[maybe_unused]] [[nodiscard]] inline valType* getValues() const {return m_Values;}
+    [[maybe_unused]] [[nodiscard]] inline SparseMatrix* getOrderingSupportedMatrix() {return static_cast<SparseMatrix*>(m_OrderingSupportedMatrix.get());}
 
     // Read-Write Getters
     [[maybe_unused]] [[nodiscard]] inline std::string& getName() {return m_Name;}
@@ -202,7 +205,6 @@ public:
     [[maybe_unused]] [[nodiscard]] inline vType*& getPtr() {return m_Ptr;}
     [[maybe_unused]] [[nodiscard]] inline vType*& getInd() {return m_Ind;}
     [[maybe_unused]] [[nodiscard]] inline valType*& getValues() {return m_Values;}
-    [[maybe_unused]] [[nodiscard]] inline SparseMatrix*& getOrderingSupportedMatrix() {return m_OrderingSupportedMatrix;}
 
 private:
     /*!
@@ -212,7 +214,7 @@ private:
     void deepCopy(const SparseMatrix& other);
 
 private:
-    SparseMatrix* m_OrderingSupportedMatrix;
+    std::shared_ptr<SparseMatrix> m_OrderingSupportedMatrix;
 
     std::string m_Name;
     vType m_Row;

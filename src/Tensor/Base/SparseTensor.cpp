@@ -19,15 +19,25 @@ SparseTensor::SparseTensor(TensorType tensorType, std::string name, vType order,
     m_Order(order)
 {
     m_Vals = new valType[m_NNZ];
-    m_Dims = new vType[m_Order];
-
-    for (int i = 0; i != m_Order; ++i)
-    {
-        m_Dims[i] = dims[i];
-    }
+    m_Dims = dims;
 }
 
-SparseTensor::~SparseTensor()
+SparseTensor::SparseTensor(TensorType tensorType, std::string name, vType order, vType *dims, eType nnz, valType *values)
+:   m_TensorType(tensorType),
+    m_Name(name),
+    m_NNZ(nnz),
+    m_Order(order)
+{
+    m_Vals = values;
+    m_Dims = dims;
+}
+
+SparseTensor::~SparseTensor() noexcept
+{
+    this->baseFree();
+}
+
+void SparseTensor::baseFree() noexcept
 {
     delete[] m_Vals;
     delete[] m_Dims;
@@ -49,18 +59,19 @@ SparseTensor &SparseTensor::operator=(const SparseTensor &other)
     }
 
     this->free();
+    this->baseFree();
     this->baseDeepCopy(other);
     this->deepCopy(&other);
 
     return *this;
 }
 
-SparseTensor::SparseTensor(SparseTensor &&other)
+SparseTensor::SparseTensor(SparseTensor &&other) noexcept
 {
     this->baseMoveResources(std::move(other));
 }
 
-SparseTensor &SparseTensor::operator=(SparseTensor &&other)
+SparseTensor &SparseTensor::operator=(SparseTensor &&other) noexcept
 {
     if (this == &other)
     {
@@ -68,6 +79,7 @@ SparseTensor &SparseTensor::operator=(SparseTensor &&other)
     }
 
     this->free();
+    this->baseFree();
     this->baseMoveResources(std::move(other));
     this->moveResources(&other);
 
@@ -88,7 +100,7 @@ void SparseTensor::baseDeepCopy(const SparseTensor &other)
     memcpy(m_Vals, other.m_Vals, sizeof(valType) * m_NNZ);
 }
 
-void SparseTensor::baseMoveResources(SparseTensor &&other)
+void SparseTensor::baseMoveResources(SparseTensor &&other) noexcept
 {
     m_TensorType = other.m_TensorType;
     m_Name = other.m_Name;

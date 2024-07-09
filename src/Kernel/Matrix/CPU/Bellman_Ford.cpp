@@ -30,7 +30,7 @@ void Bellman_Ford::preprocess(const SparseMatrix &A)
     delete[] dists;
 
     vType vertexCount = A.getRowCount();
-    dists = new unsigned[vertexCount];
+    dists = new valType[vertexCount];
 
     singleSource = 0;
     dists[singleSource] = 0;
@@ -55,7 +55,7 @@ void Bellman_Ford::functionBody(const SparseMatrix &A, int iterNumber)
             for (vType neighbour = ptrs[source]; neighbour != ptrs[source + 1]; ++neighbour)
             {
                 vType destination = inds[neighbour];
-                unsigned weight = vals[neighbour];
+                valType weight = vals[neighbour];
 
                 if (dists[destination] > dists[source] + weight)
                 {
@@ -75,7 +75,7 @@ void Bellman_Ford::functionBody(const SparseMatrix &A, int iterNumber)
         for (vType neighbour = ptrs[source]; neighbour != ptrs[source + 1]; ++neighbour)
         {
             vType destination = inds[neighbour];
-            unsigned weight = vals[neighbour];
+            valType weight = vals[neighbour];
 
             if (dists[destination] > dists[source] + weight)
             {

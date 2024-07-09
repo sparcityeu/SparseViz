@@ -19,14 +19,13 @@ class SparseTensor
 public:
     SparseTensor(TensorType tensorType, std::string name);
     SparseTensor(TensorType tensorType, std::string name, vType order, vType* dims, eType nnz);
+    SparseTensor(TensorType tensorType, std::string name, vType order, vType* dims, eType nnz, valType* values);
     SparseTensor(const SparseTensor& other);
     SparseTensor& operator=(const SparseTensor& other);
-    SparseTensor(SparseTensor&& other);
-    SparseTensor& operator=(SparseTensor&& other);
-    virtual ~SparseTensor();
+    SparseTensor(SparseTensor&& other) noexcept;
+    SparseTensor& operator=(SparseTensor&& other) noexcept;
+    virtual ~SparseTensor() noexcept;
 
-    virtual void save(const std::string& filename) = 0;
-    virtual void free() = 0;
     virtual SparseTensor* generateOrderedTensor(vType** orders, const std::string& orderingName, const std::vector<vType>& active_modes) const = 0;
     virtual SparseMatrix* matricizeTensor(vType mode) const = 0;
 
@@ -39,12 +38,14 @@ public:
     [[maybe_unused]] [[nodiscard]] valType* getValues() const {return m_Vals;}
 
 protected:
+    virtual void free() = 0;
     virtual void deepCopy(const SparseTensor* other) = 0;
     virtual void moveResources(SparseTensor* other) = 0;
 
 private:
+    void baseFree() noexcept;
     void baseDeepCopy(const SparseTensor& other);
-    void baseMoveResources(SparseTensor&& other);
+    void baseMoveResources(SparseTensor&& other) noexcept;
 
 protected:
     // Tensor Metadata

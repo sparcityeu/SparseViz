@@ -8,70 +8,72 @@
 #include "sort.h"
 
 
-SparseTensorCOO::SparseTensorCOO(std::string name, SparseTensorCOO::pigoTensorType *pigoTensor)
-:   SparseTensor(COO, name),
-    m_PigoTensor(pigoTensor)
+SparseTensorCOO::SparseTensorCOO(std::string name)
+:   SparseTensor(COO, name)
 {
-    m_Order = m_PigoTensor->order();
-    m_NNZ = m_PigoTensor->m();
-    m_Storage = m_PigoTensor->c();
-    m_Vals = m_PigoTensor->w();
-    m_Dims = m_PigoTensor->getDims();
+
 }
 
-SparseTensorCOO::SparseTensorCOO(std::string name, vType order, vType* dims, eType nnz)
+SparseTensorCOO::SparseTensorCOO(std::string name, vType order, vType *dims, eType nnz)
 :   SparseTensor(COO, name, order, dims, nnz)
 {
     m_Storage = new vType[m_NNZ * m_Order];
-    m_PigoTensor = new pigoTensorType();
-
-    m_PigoTensor->m() = m_NNZ;
-    m_PigoTensor->order() = m_Order;
-    m_PigoTensor->getDims() = m_Dims;
-    m_PigoTensor->c() = m_Storage;
-    m_PigoTensor->w() = m_Vals;
 }
 
-void SparseTensorCOO::save(const std::string &filename)
+SparseTensorCOO::SparseTensorCOO(std::string name, vType order, vType* dims, eType nnz, valType* values, vType* storage)
+:   SparseTensor(COO, name, order, dims, nnz, values),
+    m_Storage(storage)
 {
-    m_PigoTensor->save(filename);
+
 }
 
-void SparseTensorCOO::free()
+SparseTensorCOO::SparseTensorCOO(const SparseTensorCOO &other)
+:   SparseTensor(other)
+{
+    this->deepCopy(&other);
+}
+
+SparseTensorCOO::SparseTensorCOO(SparseTensorCOO &&other)
+:   SparseTensor(other)
+{
+    this->moveResources(&other);
+}
+
+SparseTensorCOO::~SparseTensorCOO() noexcept
+{
+    this->free();
+}
+
+void SparseTensorCOO::free() noexcept
 {
     delete[] m_Storage;
-    delete[] m_Dims;
-    delete[] m_Vals;
-
     m_Storage = nullptr;
-    m_Dims = nullptr;
-    m_Vals = nullptr;
-
-    m_PigoTensor->c() = nullptr;
-    m_PigoTensor->w() = nullptr;
-    m_PigoTensor->getDims() = nullptr;
-    m_PigoTensor->free();
-
-    delete m_PigoTensor;
-    m_PigoTensor = nullptr;
 }
 
 void SparseTensorCOO::deepCopy(const SparseTensor *other)
 {
     const SparseTensorCOO* otherCOO = dynamic_cast<const SparseTensorCOO*>(other);
 
-    m_PigoTensor = new pigoTensorType(*otherCOO->m_PigoTensor);
-    m_Storage = m_PigoTensor->c();
+    if (!otherCOO)
+    {
+        throw std::bad_cast();
+    }
+
+    m_Storage = new vType[m_NNZ * m_Order];
+    memcpy(m_Storage, otherCOO->m_Storage, sizeof(vType) * m_NNZ * m_Order);
 }
 
-void SparseTensorCOO::moveResources(SparseTensor *other)
+void SparseTensorCOO::moveResources(SparseTensor *other) noexcept
 {
     SparseTensorCOO* otherCOO = dynamic_cast<SparseTensorCOO*>(other);
 
-    m_PigoTensor = otherCOO->m_PigoTensor;
+    if (!otherCOO)
+    {
+        throw std::bad_cast();
+    }
+
     m_Storage = otherCOO->m_Storage;
 
-    otherCOO->m_PigoTensor = nullptr;
     otherCOO->m_Storage = nullptr;
 }
 
@@ -95,7 +97,7 @@ SparseTensor *SparseTensorCOO::generateOrderedTensor(vType **orders, const std::
 
     eType* target_permutation = new eType[m_NNZ];
 
-    for(vType m = m_Order - 1; m >= 0; m--)
+    for(int m = m_Order - 1; m >= 0; --m)
     {
         vType* ordering = orders[m];
         vType mdim = m_Dims[m];
@@ -144,6 +146,8 @@ SparseTensor *SparseTensorCOO::generateOrderedTensor(vType **orders, const std::
 
 SparseMatrix *SparseTensorCOO::matricizeTensor(vType mode) const
 {
+    // test needed
+
     vType nRow = m_Dims[mode];
     vType nCol = 1;
     for(vType m = 1; m < m_Order; ++m)
@@ -165,7 +169,7 @@ SparseMatrix *SparseTensorCOO::matricizeTensor(vType mode) const
     vType row = 0;
     for (eType i = 0; i < m_NNZ; ++i)
     {
-        eType nnzStart = i * 2;
+        eType nnzStart = i * m_Order;
         vType currentRow = storage[nnzStart + mode];
         while (row <= currentRow)
         {
@@ -194,6 +198,9 @@ SparseMatrix *SparseTensorCOO::matricizeTensor(vType mode) const
     {
         rowPtrs[i] = m_NNZ;
     }
+
+    delete[] storage;
+    delete[] values;
 
     return matrix;
 }

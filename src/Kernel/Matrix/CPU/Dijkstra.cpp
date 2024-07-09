@@ -31,7 +31,7 @@ void Dijkstra::preprocess(const SparseMatrix &A)
     delete[] dists;
 
     vType vertexCount = A.getRowCount();
-    dists = new unsigned[vertexCount];
+    dists = new valType[vertexCount];
 
     source = 0;
     dists[source] = 0;
@@ -53,14 +53,14 @@ void Dijkstra::functionBody(const SparseMatrix &A, int iterNumber)
         pair u = minHeap.top();
         minHeap.pop();
         vType vertex = u.first;
-        unsigned weight = u.second;
+        valType weight = u.second;
 
         if (weight != dists[vertex]) continue;
 
         for (vType i = ptrs[vertex]; i != ptrs[vertex + 1]; ++i)
         {
             vType adjVertex = inds[i];
-            unsigned edgeWeight = vals[i];
+            valType edgeWeight = vals[i];
 
             if (dists[adjVertex] > weight + edgeWeight)
             {

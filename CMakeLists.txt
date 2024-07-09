@@ -2,13 +2,38 @@ cmake_minimum_required(VERSION 3.22)
 project(SparseViz)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Debug)
 
-include(FindOpenMP)
-if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+# OpenMP
+find_package(OpenMP REQUIRED)
+if(OpenMP_FOUND)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler ${OpenMP_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
+
+# Cuda
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    add_definitions(-DCUDA_ENABLED)
+#    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -G -lineinfo")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler ${OpenMP_CXX_FLAGS}")
+    find_package(CUDAToolkit REQUIRED)
+endif()
+
+# MPI
+check_language(MPI)
+if(MPI_FOUND)
+    find_package(MPI REQUIRED)
+    add_definitions(-DMPI_AVAILABLE)
+    include_directories(${MPI_INCLUDE_PATH})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
+endif()
+
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
 include_directories(lib)
 include_directories(include)
@@ -92,16 +117,12 @@ set(HEADER_FILES
         include/Kernel/Matrix/CPU/SequentialBfs.h
         include/SparseVizLog/SparseVizLogger.h
         include/IO/SparseVizIO.h
-        include/IO/pigo.hpp
         include/Kernel/Matrix/CPU/Dijkstra.h
         include/Kernel/Matrix/CPU/Bellman_Ford.h
         include/Kernel/Matrix/CPU/Floyd_Warshall.h
         include/SparseVizTest/SparseVizTest.h
         include/SparseVizPerformance/SparseVizPerformance.h
         include/Tensor/Base/SparseTensorCOO.h
-        include/Tensor/Base/SparseTensorCSF.h
-        include/Tensor/Base/SparseTensorHICOO.h
-        include/Kernel/Tensor/CPU/MTTKRP.h
         include/sort.h
 )
 
@@ -145,13 +166,10 @@ set(SOURCE_FILES
         src/SparseVizTest/SparseVizTest.cpp
         src/SparseVizPerformance/SparseVizPerformance.cpp
         src/Tensor/Base/SparseTensorCOO.cpp
-        src/Tensor/Base/SparseTensorCSF.cpp
-        src/Tensor/Base/SparseTensorHICOO.cpp
-        src/Kernel/Tensor/CPU/MTTKRP.cpp
         src/sort.cpp
 )
 
-file(READ "/home/users/deniz/sparseviz/deniz_tensor_config" configContent)
+file(READ "/home/delbek/sparseviz/deniz_matrix_config" configContent)
 string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
 set(rabbitLicence ${CMAKE_MATCH_1})
 string(STRIP ${rabbitLicence} rabbitLicence)
@@ -163,26 +181,24 @@ if (NOT rabbitLicence STREQUAL "None")
     list(APPEND SOURCE_FILES src/Matrix/Orderings/RabbitOrdering.cpp)
 endif()
 
-include(CheckLanguage)
-check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
-    enable_language(CUDA)
-    add_definitions(-DCUDA_ENABLED)
+    list(APPEND HEADER_FILES include/Kernel/GPUHelpers.h)
+    list(APPEND HEADER_FILES include/Kernel/GPUKernelResult.h)
     list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/MatrixGPUKernel.h)
+    list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/JackardWeights.h)
     list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/TensorGPUKernel.h)
     list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.h)
     list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.h)
-    list(APPEND HEADER_FILES include/Kernel/GPUKernelResult.h)
-    list(APPEND HEADER_FILES include/Kernel/GPUKernels.cuh)
-    list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/CudaHelloWorld.h)
-    list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/GPUSpmvRowBased.h)
+    list(APPEND SOURCE_FILES src/Kernel/GPUHelpers.cu)
     list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/MatrixGPUKernel.cu)
+    list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/JackardWeights.cu)
     list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/TensorGPUKernel.cu)
     list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.cu)
     list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.cu)
-    list(APPEND SOURCE_FILES src/Kernel/GPUKernels.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/CudaHelloWorld.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/GPUSpmvRowBased.cu)
+endif()
+
+if(MPI_FOUND)
+
 endif()
 
 add_executable(SparseViz
@@ -190,7 +206,22 @@ add_executable(SparseViz
         README.md
 )
 
-target_link_libraries(SparseViz ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDA_cusparse_LIBRARY})
-target_link_libraries(SparseViz /home/users/deniz/sparseviz/lib/libpatoh.a)
-target_link_libraries(SparseViz /home/users/deniz/sparseviz/lib/libamd.a)
-target_link_libraries(SparseViz libnuma.a)
+target_link_libraries(SparseViz
+        OpenMP::OpenMP_CXX
+        cuda
+        ${CUDA_LIBRARIES}
+        ${CUDA_CUBLAS_LIBRARIES}
+        ${CUDA_cusparse_LIBRARY}
+)
+
+if(MPI_FOUND)
+    target_link_libraries(SparseViz
+            MPI::MPI_CXX
+    )
+endif()
+
+target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libpatoh.a)
+target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libamd.a)
+#target_link_libraries(SparseViz libnuma.a)
+
+target_compile_options(SparseViz PRIVATE -O3)

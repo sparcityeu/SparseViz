@@ -11,8 +11,8 @@ void AMDOrdering::orderingFunction()
     const int* ptrs = (const int*) this->getMatrix().getPtr();
     const int* ids = (const int*) this->getMatrix().getInd();
 
-    rowIPermutation = new unsigned[n];
-    colIPermutation = new unsigned[n];
+    rowIPermutation = new vType[n];
+    colIPermutation = new vType[n];
     for(int i = 0; i < n; i++)
     {
         rowIPermutation[i] = colIPermutation[i] = i;

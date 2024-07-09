@@ -7,9 +7,6 @@
 #include <sstream>
 #include "MatrixMarketIOLibrary.h"
 #include "SparseTensorCOO.h"
-#include "SparseTensorCSF.h"
-#include "SparseTensorHICOO.h"
-#include "pigo.hpp"
 #include "sort.h"
 
 
@@ -17,7 +14,9 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
 {
     // Checking whether it has already been read and saved to a binary file previously
     std::string binaryFileName = marketFileName + ".bin";
-    std::string matrixName = split(split(binaryFileName, '.').front(), '/').back();
+    std::vector<std::string> marketFileParsed = split(marketFileName, '.');
+    if (marketFileParsed.size() <= 1) throw std::runtime_error("Your matrix file name should have a file extension of .mtx");
+    std::string matrixName = split(marketFileParsed[marketFileParsed.size() - 2], '/').back();
 
     SparseMatrix* matrix = SparseVizIO::readMatrixFromBinaryFile(binaryFileName, matrixName);
     if (matrix != nullptr)
@@ -33,7 +32,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
 
     if (f == nullptr)
     {
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error("Failed to open the file: " + marketFileName);
         }
@@ -42,7 +41,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     if (mm_read_banner(f, &matcode) != 0)
     {
         fclose(f);
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error(marketFileName + ": Could not process the Matrix Market banner.");
         }
@@ -51,7 +50,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     if (!(mm_is_valid(matcode) && mm_is_matrix(matcode) && mm_is_sparse(matcode)))
     {
         fclose(f);
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error(marketFileName + ": Unsupported type: [" + mm_typecode_to_str(matcode) + ']');
         }
@@ -73,7 +72,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     char line[256];
 
     fgets(line, sizeof(line), f);
-    int itemsRead = sscanf(line, "%d %d %lg", &r, &c, &val);
+    int itemsRead = sscanf(line, "%d %d %lf", &r, &c, &val);
     storage[0] = --r; storage[1] = --c;
     if (itemsRead == 2)
     {
@@ -103,10 +102,10 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     {
         values[0] = val;
 
-        for (int i = 1; i != nnz; ++i)
+        for (int i = 1; i < nnz; ++i)
         {
             fgets(line, sizeof(line), f);
-            sscanf(line, "%d %d %lg", &r, &c, &val);
+            sscanf(line, "%d %d %lf", &r, &c, &val);
 
             --r; // converting 1-based indexing to 0-based indexing
             --c;
@@ -149,6 +148,7 @@ void SparseVizIO::writeMatrixToBinaryFile(const std::string &binaryFileName, Spa
     if ((fp = fopen(binaryFileName.c_str(), "w")) == nullptr)
     {
         std::cout << binaryFileName << " cannot be created" << endl;
+        return;
     }
 
     double start_time = omp_get_wtime();
@@ -270,8 +270,10 @@ void SparseVizIO::writeMatrixOrderingToBinaryFile(const std::string &binaryFileN
 
 SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFileName)
 {
-    std::string binaryFileName = split(marketFileName, '.').front() + ".tns.bin";
-    std::string tensorName = split(split(binaryFileName, '.').front(), '/').back();
+    std::string binaryFileName = marketFileName + ".bin";
+    std::vector<std::string> marketFileParsed = split(marketFileName, '.');
+    if (marketFileParsed.size() <= 1) throw std::runtime_error("Your tensor file name should have a file extension of .tns");
+    std::string tensorName = split(marketFileParsed[marketFileParsed.size() - 2], '/').back();
 
     SparseTensor* tensor = SparseVizIO::readTensorFromBinaryFile(binaryFileName, tensorName);
     if (tensor != nullptr)
@@ -281,30 +283,48 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
     double start_time = omp_get_wtime();
 
-    // Currently construction of all tensor formats depend on the COO format, which itself depends on the pigo tensor.
-    auto pigoTensor = new pigo::Tensor<vType, eType, vType*, valType, valType*, true>(marketFileName, pigo::FileType::EDGE_LIST);
-    SparseTensorCOO* coo = new SparseTensorCOO(tensorName, pigoTensor);
-    for(eType i = 0; i < coo->getNNZ(); i++)
+    std::ifstream file(marketFileName);
+    std::string line;
+    std::getline(file, line);
+    std::vector<std::string> lineSplitted = split(line, ' ');
+
+    vType order;
+    order = lineSplitted.size() - 1;
+    vType* dims = new vType[order];
+    memset(dims, 0, sizeof(vType) * order);
+    eType nnz = 0;
+
+    std::vector<vType> storage;
+    std::vector<valType> values;
+    for (int i = 0; i < order; ++i)
     {
-        for(int o = 0; o < tensor->getOrder(); o++)
+        storage.push_back(std::stoul(lineSplitted[i]) - 1);
+    }
+    values.push_back(std::stod(lineSplitted[order]));
+    ++nnz;
+
+    while (std::getline(file, line))
+    {
+        lineSplitted = split(line, ' ');
+        for (int i = 0; i < order; ++i)
         {
-            coo->getStorage()[i * tensor->getOrder() + o]--;
+            vType coord = std::stoul(lineSplitted[i]) - 1;
+            if ((coord + 1) > dims[i])
+            {
+                dims[i] = coord + 1;
+            }
+            storage.push_back(coord);
         }
+        values.push_back(std::stod(lineSplitted[order]));
+        ++nnz;
     }
 
-    if (TENSOR_STORAGE_TYPE == COO)
-    {
-        tensor = coo;
-    }
-    else if (TENSOR_STORAGE_TYPE == CSF)
-    {
-        sortNonzeros(coo->getOrder(), coo->getDims(), coo->getNNZ(), coo->getStorage(), coo->getValues());
-        tensor = SparseTensorCSF::constructCSFFromCOO("csf_" + tensorName, coo);
-    }
-    else if (TENSOR_STORAGE_TYPE == HiCOO)
-    {
-        tensor = SparseTensorHICOO::constructHICOOFromCOO("hicoo_" + tensorName, BLOCK_SIZE, coo, SB_BITS);
-    }
+    valType* valuesArr = new valType[nnz];
+    memcpy(valuesArr, values.data(), sizeof(valType) * nnz);
+    vType* storageArr = new vType[nnz * order];
+    memcpy(storageArr, storage.data(), sizeof(vType) * nnz * order);
+
+    tensor = new SparseTensorCOO(tensorName, order, dims, nnz, valuesArr, storageArr);
 
     double end_time = omp_get_wtime();
 
@@ -317,60 +337,61 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
 void SparseVizIO::writeTensorToBinaryFile(const std::string &binaryFileName, SparseTensor *tensor)
 {
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "w")) == nullptr)
+    {
+        std::cout << binaryFileName << " cannot be created" << endl;
+        return;
+    }
+
     double start_time = omp_get_wtime();
 
-    try
-    {
-        tensor->save(binaryFileName);
-    }
-    catch (const pigo::Error&)
-    {
-        std::cout << binaryFileName << " cannot be created" << std::endl;
-        return;
-    }
-    catch (const std::runtime_error&)
-    {
-        return;
-    }
+    vType order = tensor->getOrder();
+    vType* dims = tensor->getDims();
+    eType nnz = tensor->getNNZ();
+    valType* values = tensor->getValues();
+    vType* storage = dynamic_cast<SparseTensorCOO*>(tensor)->getStorage();
+
+    fwrite(&order, sizeof(vType), 1, fp);
+    fwrite(dims, sizeof(vType), order, fp);
+    fwrite(&nnz, sizeof(eType), 1, fp);
+    fwrite(values, sizeof(valType), nnz, fp);
+    fwrite(storage, sizeof(vType), nnz * order, fp);
+
+    fclose(fp);
 
     double end_time = omp_get_wtime();
+
     logger.logWritingTensorBinary(tensor, end_time - start_time);
 }
 
 SparseTensor *SparseVizIO::readTensorFromBinaryFile(const std::string &binaryFileName, const std::string& name)
 {
-    try
-    {
-        double start_time = omp_get_wtime();
-
-        // Currently construction of all tensor formats depend on the COO format, which itself depends on the pigo tensor.
-        auto pigoTensor = new pigo::Tensor<vType, eType, vType*, valType, valType*, true>(binaryFileName, pigo::FileType::PIGO_TENSOR_BIN);
-        SparseTensorCOO* coo = new SparseTensorCOO(name, pigoTensor);
-
-        SparseTensor* tensor = nullptr;
-        if (TENSOR_STORAGE_TYPE == COO)
-        {
-            tensor = coo;
-        }
-        else if (TENSOR_STORAGE_TYPE == CSF)
-        {
-            tensor = SparseTensorCSF::constructCSFFromCOO("csf_" + name, coo);
-        }
-        else if (TENSOR_STORAGE_TYPE == HiCOO)
-        {
-            tensor = SparseTensorHICOO::constructHICOOFromCOO("hicoo_" + name, BLOCK_SIZE, coo, SB_BITS);
-        }
-
-        double end_time = omp_get_wtime();
-
-        logger.logReadingTensorBinary(tensor, end_time - start_time);
-
-        return tensor;
-    }
-    catch (const pigo::Error& e)
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) == nullptr)
     {
         return nullptr;
     }
+
+    double start_time = omp_get_wtime();
+
+    vType order;
+    vType* dims;
+    eType nnz;
+
+    fread(&order, sizeof(vType), 1, fp);
+    dims = new vType[order];
+    fread(dims, sizeof(vType), order, fp);
+    fread(&nnz, sizeof(eType), 1, fp);
+    SparseTensor* tensor = new SparseTensorCOO(name, order, dims, nnz);
+    fread(tensor->getValues(), sizeof(valType), nnz, fp);
+    fread(dynamic_cast<SparseTensorCOO*>(tensor)->getStorage(), sizeof(vType), nnz * order, fp);
+
+    double end_time = omp_get_wtime();
+
+    logger.logReadingTensorBinary(tensor, end_time - start_time);
+
+    return tensor;
 }
 
 SparseTensor* SparseVizIO::readOrderedTensorFromBinaryFile(const std::string &orderingName, const std::string &tensorName)
@@ -389,43 +410,30 @@ void SparseVizIO::writeOrderedTensorToBinaryFile(SparseTensor *tensor)
 
 bool SparseVizIO::readTensorOrderingFromBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType**& orderedDimensions)
 {
-    try
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
     {
-        pigo::File binaryFile(binaryFileName, pigo::OpenMode::READ);
         orderedDimensions = new vType*[norder];
-        for (vType i = 0; i != norder; ++i)
-        {   
+        for (vType i = 0; i < norder; ++i)
+        {
             orderedDimensions[i] = new vType[dims[i]];
-            size_t sizeToRead = sizeof(vType) * dims[i];
-            binaryFile.parallel_read(reinterpret_cast<char*>(orderedDimensions[i]), sizeToRead);
+            fread(orderedDimensions[i], sizeof(vType), dims[i], fp);
         }
+        fclose(fp);
         return true;
     }
-    catch (const pigo::Error& e)
-    {
-        return false;
-    }
+    return false;
 }
 
 void SparseVizIO::writeTensorOrderingToBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType** orderedDimensions)
 {
-    try
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
     {
-        size_t totalSize = 0;
-        for (vType i = 0; i != norder; ++i)
+        for (vType i = 0; i < norder; ++i)
         {
-            size_t sizeToWrite = sizeof(vType) * dims[i];
-            totalSize += sizeToWrite;
+            fwrite(orderedDimensions[i], sizeof(vType), dims[i], fp);
         }
-        pigo::File binaryFile(binaryFileName, pigo::OpenMode::WRITE, totalSize);
-        for (vType i = 0; i != norder; ++i)
-        {
-            size_t sizeToWrite = sizeof(vType) * dims[i];
-            binaryFile.parallel_write(reinterpret_cast<char*>(orderedDimensions[i]), sizeToWrite);
-        }
-    }
-    catch (const pigo::Error& e)
-    {
-        std::cout << "Skipping writing tensor ordering to a binary file: " << e.what() << std::endl;
+        fclose(fp);
     }
 }

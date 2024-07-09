@@ -28,7 +28,7 @@ private:
 
 public:
     vType source;
-    unsigned* dists;
+    valType* dists;
 
 private:
     const vType* ptrs;

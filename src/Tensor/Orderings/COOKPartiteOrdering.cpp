@@ -162,7 +162,7 @@ SparseMatrix* COOKPartiteOrdering::generateKPartiteMatrix(std::string name)
     vType matrix_dim = 0;
     vType* offsets = new vType[active_modes.size() + 1];
 
-    const SparseTensorCOO& tensorCOO = *getCOOFormat(&tensor);
+    const SparseTensorCOO& tensorCOO = dynamic_cast<const SparseTensorCOO&>(tensor);
 
     const vType tensor_order = tensorCOO.getOrder();
     const vType* tensor_dims = tensorCOO.getDims();

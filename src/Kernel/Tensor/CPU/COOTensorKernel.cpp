@@ -9,7 +9,7 @@
 
 bool COOTensorKernel::init(const SparseTensor &T)
 {
-    const SparseTensorCOO& tensorCOO = *getCOOFormat(&T);
+    const SparseTensorCOO& tensorCOO = dynamic_cast<const SparseTensorCOO&>(T);
 
     nonzeros = tensorCOO.getStorage();
     dims = T.getDims();

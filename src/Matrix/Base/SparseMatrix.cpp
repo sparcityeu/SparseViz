@@ -7,9 +7,10 @@ SparseMatrix::SparseMatrix(std::string name, vType r, vType c, eType nnz, vType*
     m_Row(r),
     m_Col(c),
     m_NNZCount(nnz),
-    m_Values(values),
-    m_OrderingSupportedMatrix(nullptr)
+    m_Values(values)
 {
+    m_OrderingSupportedMatrix = nullptr;
+
     m_Ptr = new vType[m_Row + 1];
     memset(m_Ptr, 0, sizeof(vType) * (m_Row + 1));
 
@@ -37,9 +38,10 @@ SparseMatrix::SparseMatrix(std::string name, vType r, vType c, vType nnzCount, v
     m_NNZCount(nnzCount),
     m_Ptr(ptrs),
     m_Ind(ids),
-    m_Values(vals),
-    m_OrderingSupportedMatrix(nullptr)
+    m_Values(vals)
 {
+    m_OrderingSupportedMatrix = nullptr;
+
     this->checkProperties(false);
 }
 
@@ -51,10 +53,11 @@ SparseMatrix::SparseMatrix(std::string name, vType r, vType c, vType nnzCount, v
     m_Ptr(ptrs),
     m_Ind(ids),
     m_Values(vals),
-    m_OrderingSupportedMatrix(nullptr),
     m_IsSymmetric(isSymmetric),
     m_IsPatternSymmetric(isPatternSymmetric)
 {
+    m_OrderingSupportedMatrix = nullptr;
+
     this->checkShape();
 }
 
@@ -64,9 +67,10 @@ SparseMatrix::SparseMatrix(std::string name, vType r, vType c, vType nnzCount, b
     m_Col(c),
     m_NNZCount(nnzCount),
     m_IsSymmetric(isSymmetric),
-    m_IsPatternSymmetric(isPatternSymmetric),
-    m_OrderingSupportedMatrix(nullptr)
+    m_IsPatternSymmetric(isPatternSymmetric)
 {
+    m_OrderingSupportedMatrix = nullptr;
+
     m_Ptr = new vType[m_Row + 1];
     memset(m_Ptr, 0, sizeof(vType) * (m_Row + 1));
 
@@ -84,7 +88,6 @@ SparseMatrix::~SparseMatrix()
     delete[] m_Ptr;
     delete[] m_Ind;
     delete[] m_Values;
-    delete m_OrderingSupportedMatrix;
 }
 
 void SparseMatrix::checkProperties(bool adjSorted)
@@ -129,7 +132,6 @@ SparseMatrix &SparseMatrix::operator=(const SparseMatrix &other)
     delete[] m_Ptr;
     delete[] m_Ind;
     delete[] m_Values;
-    delete m_OrderingSupportedMatrix;
 
     this->deepCopy(other);
 
@@ -146,9 +148,10 @@ SparseMatrix::SparseMatrix(SparseMatrix&& other)
     m_IsSquare(other.m_IsSquare),
     m_Ptr(other.m_Ptr),
     m_Ind(other.m_Ind),
-    m_Values(other.m_Values),
-    m_OrderingSupportedMatrix(other.m_OrderingSupportedMatrix)
+    m_Values(other.m_Values)
 {
+    m_OrderingSupportedMatrix = other.m_OrderingSupportedMatrix;
+
     other.m_Ptr = nullptr;
     other.m_Ind = nullptr;
     other.m_Values = nullptr;
@@ -165,7 +168,6 @@ SparseMatrix& SparseMatrix::operator=(SparseMatrix&& other)
     delete[] m_Ptr;
     delete[] m_Ind;
     delete[] m_Values;
-    delete m_OrderingSupportedMatrix;
 
     m_Name = other.m_Name;
     m_Row = other.m_Row;
@@ -290,7 +292,7 @@ void SparseMatrix::printNonzeros(vType count) const
     {
         for (vType nnz = m_Ptr[r-1]; nnz != m_Ptr[r]; ++nnz)
         {
-            std::cout << r - 1 << ' ' << m_Ind[nnz] << ' ' << m_Values[nnz] << std::endl;
+            std::cout << r - 1 << ' ' << m_Ind[nnz] << ' ' << (double) m_Values[nnz] << std::endl;
         }
     }
     std::cout << std::endl;
@@ -674,7 +676,7 @@ void SparseMatrix::generateOrderingSupportedMatrix()
     vType *os_ptrs = new vType[maxmn + 1];
     vType *os_ids = new vType[entries.size()];
 
-    m_OrderingSupportedMatrix = new SparseMatrix("Ordering Supported " + m_Name, maxmn, maxmn, 0, os_ptrs, os_ids, nullptr);
+    m_OrderingSupportedMatrix = std::make_shared<SparseMatrix>(SparseMatrix("Ordering Supported " + m_Name, maxmn, maxmn, 0, os_ptrs, os_ids, nullptr));
     m_OrderingSupportedMatrix->isSymmetric() = true;
     m_OrderingSupportedMatrix->isPatternSymmetric() = true;
     m_OrderingSupportedMatrix->isSquare() = true;

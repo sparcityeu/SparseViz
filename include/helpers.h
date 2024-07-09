@@ -41,9 +41,5 @@ struct pair_hash
     }
 };
 
-class SparseTensorCOO;
-SparseTensorCOO* getCOOFormat(SparseTensor* tensor);
-const SparseTensorCOO* getCOOFormat(const SparseTensor* tensor);
-
 
 #endif //SPARSEVIZ_HELPERS_H

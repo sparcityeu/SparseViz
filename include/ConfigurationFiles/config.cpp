@@ -26,7 +26,6 @@ std::string TEST_DIRECTORY = "/home/users/kaya/SparseViz/TestFiles/";
 std::string TEST_CONFIG = TEST_DIRECTORY + "template_test_file";
 TensorType TENSOR_STORAGE_TYPE;
 BlockType BLOCK_SIZE;
-u_int8_t SB_BITS;
 
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
@@ -364,17 +363,6 @@ void ConfigFileReader::readSetting(const std::string& line)
             throw std::runtime_error("Invalid format for BLOCK_SIZE");
         }
     }
-    else if (lineSplitted[0] == "SB_BITS")
-    {
-        try
-        {
-            SB_BITS = std::stoi(lineSplitted[1]);
-        }
-        catch (const std::invalid_argument &e)
-        {
-            throw std::runtime_error("Invalid format for SB_BITS");
-        }
-    }
 }
 
 void ConfigFileReader::readTensor(const std::string &line)
@@ -604,17 +592,20 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
 
-    std::string kernelName = lineSplitted[0];
-    std::vector<std::string> gridSizesString = split(lineSplitted[1], '/');
-    std::vector<std::string> blockSizesString = split(lineSplitted[2], '/');
+    std::string kernelClassName = lineSplitted[0];
+    std::string kernelName = lineSplitted[1];
+    std::vector<std::string> gridSizesString = split(lineSplitted[2], '/');
+    std::vector<std::string> blockSizesString = split(lineSplitted[3], '/');
+    std::vector<std::string> sharedMemorySizesString = split(lineSplitted[4], '/');
 
-    if (gridSizesString.size() != blockSizesString.size())
+    if (gridSizesString.size() != blockSizesString.size() && blockSizesString.size() != sharedMemorySizesString.size())
     {
-        throw std::runtime_error("Length of the gridSize and blockSize does not match for " + kernelName);
+        throw std::runtime_error("Length of the gridSizes, blockSizes, and sharedMemorySizes does not match for " + kernelName);
     }
 
     std::vector<int> gridSizes(gridSizesString.size());
     std::vector<int> blockSizes(gridSizesString.size());
+    std::vector<int> sharedMemorySizes(gridSizesString.size());
     for (int i = 0; i != gridSizesString.size(); ++i)
     {
         try
@@ -636,12 +627,24 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
         {
             throw std::runtime_error("Invalid format for the blockSizes of " + kernelName);
         }
+
+        try
+        {
+            int sharedMemorySize = std::stoi(sharedMemorySizesString[i]);
+            sharedMemorySizes[i] = sharedMemorySize;
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for the sharedMemorySizes of " + kernelName);
+        }
     }
+
+    std::string kernelClassParameters = lineSplitted[5];
 
     int nRun, nIgnore;
     try
     {
-        nRun = std::stoi(lineSplitted[3]);
+        nRun = std::stoi(lineSplitted[6]);
     }
     catch (const std::invalid_argument &e)
     {
@@ -650,14 +653,14 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
 
     try
     {
-        nIgnore = std::stoi(lineSplitted[4]);
+        nIgnore = std::stoi(lineSplitted[7]);
     }
     catch (const std::invalid_argument &e)
     {
         throw std::runtime_error("Invalid format for the nIgnore of " + kernelName);
     }
 
-    m_Engine->addGPUMatrixKernel(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    m_Engine->addGPUMatrixKernel(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelClassParameters, nRun, nIgnore);
 }
 #endif
 
@@ -666,17 +669,20 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
 
-    std::string kernelName = lineSplitted[0];
-    std::vector<std::string> gridSizesString = split(lineSplitted[1], '/');
-    std::vector<std::string> blockSizesString = split(lineSplitted[2], '/');
+    std::string kernelClassName = lineSplitted[0];
+    std::string kernelName = lineSplitted[1];
+    std::vector<std::string> gridSizesString = split(lineSplitted[2], '/');
+    std::vector<std::string> blockSizesString = split(lineSplitted[3], '/');
+    std::vector<std::string> sharedMemorySizesString = split(lineSplitted[4], '/');
 
-    if (gridSizesString.size() != blockSizesString.size())
+    if (gridSizesString.size() != blockSizesString.size() && blockSizesString.size() != sharedMemorySizesString.size())
     {
-        throw std::runtime_error("Length of the gridSize and blockSize does not match for " + kernelName);
+        throw std::runtime_error("Length of the gridSizes, blockSizes, and sharedMemorySizes does not match for " + kernelName);
     }
 
     std::vector<int> gridSizes(gridSizesString.size());
     std::vector<int> blockSizes(gridSizesString.size());
+    std::vector<int> sharedMemorySizes(gridSizesString.size());
     for (int i = 0; i != gridSizesString.size(); ++i)
     {
         try
@@ -698,12 +704,24 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
         {
             throw std::runtime_error("Invalid format for the blockSizes of " + kernelName);
         }
+
+        try
+        {
+            int sharedMemorySize = std::stoi(sharedMemorySizesString[i]);
+            sharedMemorySizes[i] = sharedMemorySize;
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for the sharedMemorySizes of " + kernelName);
+        }
     }
+
+    std::string kernelClassParameters = lineSplitted[5];
 
     int nRun, nIgnore;
     try
     {
-        nRun = std::stoi(lineSplitted[3]);
+        nRun = std::stoi(lineSplitted[6]);
     }
     catch (const std::invalid_argument &e)
     {
@@ -712,14 +730,14 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
 
     try
     {
-        nIgnore = std::stoi(lineSplitted[4]);
+        nIgnore = std::stoi(lineSplitted[7]);
     }
     catch (const std::invalid_argument &e)
     {
         throw std::runtime_error("Invalid format for the nIgnore of " + kernelName);
     }
 
-    m_Engine->addGPUTensorKernel(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    m_Engine->addGPUTensorKernel(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelClassParameters, nRun, nIgnore);
 }
 #endif
 

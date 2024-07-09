@@ -11,13 +11,13 @@
 
 void MinDegOrdering::orderingFunction() {
   unsigned n = this->getMatrix().getRowCount();
-  unsigned* ptrs = this->getMatrix().getPtr();
-  unsigned* ids = this->getMatrix().getInd();
+  vType* ptrs = this->getMatrix().getPtr();
+  vType* ids = this->getMatrix().getInd();
   int DEG_THRESHOLD = 200;//(ptrs[n] / n) * 10;
   //if(DEG_THRESHOLD > 250) DEG_THRESHOLD = 250;
 
-  rowIPermutation = new unsigned[n];
-  colIPermutation = new unsigned[n];
+  rowIPermutation = new vType[n];
+  colIPermutation = new vType[n];
 
   int min_deg = n;
   for(int i = 0; i < n; i++) {
@@ -50,7 +50,7 @@ void MinDegOrdering::orderingFunction() {
   for(int i = 0; i < n; i++) {//that many iterations will be performed - every row must be permuted
     while(cdeg <= n && vtxes[cdeg].size() == 0) cdeg++; //find the next full entry
     //if(cdeg >= DEG_THRESHOLD) break;
-    if(i == 100) exit(1);
+    if(i == 100) break;
     int vtx = vtxes[cdeg].back(); //the last vertex in the vector
     vtxes[cdeg].pop_back(); //popped back from vtxes 
     info[vtx].cdeg = -1; //removed from the vtxes so update info accordingly

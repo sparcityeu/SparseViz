@@ -206,7 +206,7 @@ void MatrixOrdering::calculateOrderingPrice(unsigned int orderingFunctionPrice)
 
 void MatrixOrdering::checkOrderingSupportingStatus()
 {
-#pragma omp critical(orderingSupport)
+#pragma omp critical (orderingSupportingLock)
     {
         if (!this->getMatrix().isPatternSymmetric() && !patternUnsymmetricSupport)
         {

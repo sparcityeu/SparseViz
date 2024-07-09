@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include "omp.h"
 #include "SparseVizLogger.h"
+#include <set>
 #include <cstdint>
 
 
@@ -56,7 +57,6 @@ enum TensorType
 };
 extern TensorType TENSOR_STORAGE_TYPE;
 extern BlockType BLOCK_SIZE;
-extern u_int8_t SB_BITS;
 
 /*!
  * @brief ConfigFileReader is a class that is responsible for reading, parsing, and processing the config file and initializing the SparseVizEngine based on it.

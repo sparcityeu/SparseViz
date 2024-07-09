@@ -221,7 +221,7 @@ std::string stat_to_html_table(const TensorOrdering &o, const TStatistic &stat)
 void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     double start_time = omp_get_wtime();
 
-    const SparseTensorCOO &tensor = *getCOOFormat(&orderings[0]->getTensor());
+    const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(orderings[0]->getTensor());
     const std::vector<vType>& active_modes = orderings[0]->getActiveModes();
 
     std::string filename = tensor.getName();
@@ -312,9 +312,10 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
             ordered_nnz[1] = order[active_modes[1]][y];
             ordered_nnz[2] = order[active_modes[2]][z];
             if(ordered_nnz[0] >= dims[0] || ordered_nnz[1] >= dims[1] || ordered_nnz[2] >= dims[2]) {
-                std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[0] << " | "  
-                                                                                        << ordered_nnz[1] << " " << dims[1] << " | "  
+                std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[0] << " | "
+                                                                                        << ordered_nnz[1] << " " << dims[1] << " | "
                                                                                         << ordered_nnz[2] << " " << dims[2] << std::endl;
+                throw std::runtime_error("a");
                 return;
             }
             for(int d = 0; d < 3; d++) {
@@ -1141,7 +1142,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
     {
-        const SparseTensorCOO &tensor = *getCOOFormat(&orderings[n]->getTensor());
+        const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(orderings[n]->getTensor());
         const std::vector<vType>& active_modes = orderings[n]->getActiveModes();
 
         const int tensor_order = tensor.getOrder();
@@ -1222,6 +1223,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
                 std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[n][0] << " | "  
                                                                                         << ordered_nnz[1] << " " << dims[n][1] << " | "  
                                                                                         << ordered_nnz[2] << " " << dims[n][2] << std::endl;
+                throw std::runtime_error("b");
             }
             for(int d = 0; d < 3; d++) {
                 binIDs[d] = calculateBin(ordered_nnz[d], dims[n][d], vis_dims[n][d]);
@@ -2031,7 +2033,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
     {
-        const SparseTensorCOO &tensor = *getCOOFormat(&ordering->getTensor());
+        const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(ordering->getTensor());
         const std::vector<vType>& active_modes = active_modes_s[n];
 
         const int tensor_order = tensor.getOrder();
@@ -2112,6 +2114,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
                 std::cerr << ordering->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[n][0] << " | "  
                                                                                     << ordered_nnz[1] << " " << dims[n][1] << " | "  
                                                                                     << ordered_nnz[2] << " " << dims[n][2] << std::endl;
+                throw std::runtime_error("c");
             }
             for(int d = 0; d < 3; d++) {
                 binIDs[d] = calculateBin(ordered_nnz[d], dims[n][d], vis_dims[n][d]);

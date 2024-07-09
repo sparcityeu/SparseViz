@@ -1,7 +1,4 @@
 #include "helpers.h"
-#include "SparseTensorCOO.h"
-#include "SparseTensorHICOO.h"
-#include "SparseTensorCSF.h"
 
 
 vType calculateBin(vType coordinate, vType dimSize, vType numBins)
@@ -170,45 +167,4 @@ std::string lowerString(const std::string& s)
         loweredString += tolower(c);
     }
     return loweredString;
-}
-
-
-const SparseTensorCOO* getCOOFormat(const SparseTensor* tensor)
-{
-    if (tensor->getTensorType() == COO)
-    {
-        const SparseTensorCOO* coo = dynamic_cast<const SparseTensorCOO*>(tensor);
-        return coo;
-    }
-    if (tensor->getTensorType() == CSF)
-    {
-        const SparseTensorCSF* csf = dynamic_cast<const SparseTensorCSF*>(tensor);
-        return csf->getCOO();
-    }
-    if (tensor->getTensorType() == HiCOO)
-    {
-        const SparseTensorHICOO* hicoo = dynamic_cast<const SparseTensorHICOO*>(tensor);
-        return hicoo->getCOO();
-    }
-    return nullptr;
-}
-
-SparseTensorCOO* getCOOFormat(SparseTensor* tensor)
-{
-    if (tensor->getTensorType() == COO)
-    {
-        SparseTensorCOO* coo = dynamic_cast<SparseTensorCOO*>(tensor);
-        return coo;
-    }
-    if (tensor->getTensorType() == CSF)
-    {
-        SparseTensorCSF* csf = dynamic_cast<SparseTensorCSF*>(tensor);
-        return csf->getCOO();
-    }
-    if (tensor->getTensorType() == HiCOO)
-    {
-        SparseTensorHICOO* hicoo = dynamic_cast<SparseTensorHICOO*>(tensor);
-        return hicoo->getCOO();
-    }
-    return nullptr;
 }

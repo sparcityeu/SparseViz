@@ -168,3 +168,16 @@ std::string lowerString(const std::string& s)
     }
     return loweredString;
 }
+
+
+std::string getLine(char*& addr)
+{
+    std::string line;
+    while ((*addr) != '\n')
+    {
+        line += (*addr);
+        ++addr;
+    }
+    ++addr;
+    return line;
+}

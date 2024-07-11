@@ -102,7 +102,7 @@ set(HEADER_FILES
         include/Matrix/Orderings/amd.h
         include/Matrix/Orderings/AMDOrdering.h
         include/Tensor/Base/SparseTensor.h
-        include/Matrix/Base/MatrixMarketIOLibrary.h
+        include/IO/MatrixMarketIOLibrary.h
         include/Tensor/Orderings/TensorOrdering.h
         include/Tensor/Orderings/TensorNaturalOrdering.h
         include/Tensor/Orderings/COOKPartiteOrdering.h
@@ -130,7 +130,7 @@ set(SOURCE_FILES
         src/main.cpp
         include/ConfigurationFiles/config.cpp
         include/ConfigurationFiles/SparseVizEngine.cpp
-        src/Matrix/Base/MatrixMarketIOLibrary.cpp
+        src/IO/MatrixMarketIOLibrary.cpp
         src/Matrix/Orderings/TrivialOrdering.cpp
         src/Matrix/Orderings/MatrixOrdering.cpp
         src/Matrix/Base/SparseMatrix.cpp

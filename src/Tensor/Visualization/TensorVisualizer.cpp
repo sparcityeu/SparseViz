@@ -1096,16 +1096,17 @@ html_file << R"(
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
     logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
@@ -1974,16 +1975,17 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
     logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
@@ -2871,16 +2873,17 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
     logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    

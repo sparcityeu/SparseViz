@@ -4,11 +4,12 @@ D making TIMING_LOG to work as expected (should only have an effect on terminal 
 
 
 Future work --------------------------------------------
-D/K dimensions in tensor file should not be necessary
+D why saving natural orderings into binary file?
+D/K dimensions in tensor file should not be necessary [COMPLETED]
 D why some locks are initialized and destroyed in main.cpp?, clean them
 D csf + hicoo
 D performance module, perf for orderings and kernels + cupti for gpu kernels and future gpu parallel orderings
-D IO written from scratch, parallel IO module, matrixmarketio dependency removal
+D IO written from scratch, parallel IO module - matrix: [] tensor: [COMPLETED]
 D kernel overview for efficiency
 D: add matrix kernels for cpu and gpu
 K/D add cpu tensor kernels

@@ -312,7 +312,7 @@ void ConfigFileReader::readSetting(const std::string& line)
     }
     else if (lineSplitted[0] == "LOGO_PATH")
     {
-        LOGO_PATH = lineSplitted[1];
+        LOGO_PATH = PROJECT_DIR + lineSplitted[1];
     }
     else if (lineSplitted[0] == "FAVICON_PATH")
     {

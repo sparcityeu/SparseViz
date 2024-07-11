@@ -23,6 +23,7 @@ void trim(std::string &s);
 std::vector<std::string> split(const std::string &s, char delimiter);
 std::string merge(const std::vector<std::string>& splittedVersion);
 std::string lowerString(const std::string& s);
+std::string getLine(char*& addr);
 
 struct entry {
 	int row;

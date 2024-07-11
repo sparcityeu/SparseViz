@@ -8,6 +8,12 @@
 #include "MatrixMarketIOLibrary.h"
 #include "SparseTensorCOO.h"
 #include "sort.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/mman.h"
+#include "sys/stat.h"
+#include "fcntl.h"
+#include "stdio.h"
 
 
 SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFileName)
@@ -159,20 +165,20 @@ void SparseVizIO::writeMatrixToBinaryFile(const std::string &binaryFileName, Spa
     bool& isPatternSymmetric = matrix->isPatternSymmetric();
     bool& isSymmetric = matrix->isSymmetric();
 
-    fwrite (&rowCount, sizeof(vType), 1, fp);
-    fwrite (&colCount, sizeof(vType), 1, fp);
-    fwrite (&nnzCount, sizeof(vType), 1, fp);
-    fwrite (&isPatternSymmetric, sizeof(bool), 1, fp);
-    fwrite (&isSymmetric, sizeof(bool), 1, fp);
+    fwrite(&rowCount, sizeof(vType), 1, fp);
+    fwrite(&colCount, sizeof(vType), 1, fp);
+    fwrite(&nnzCount, sizeof(vType), 1, fp);
+    fwrite(&isPatternSymmetric, sizeof(bool), 1, fp);
+    fwrite(&isSymmetric, sizeof(bool), 1, fp);
 
     vType* ptr = matrix->getPtr();
-    fwrite (ptr, sizeof(vType), (rowCount + 1), fp);
+    fwrite(ptr, sizeof(vType), (rowCount + 1), fp);
 
     vType* ind = matrix->getInd();
-    fwrite (ind, sizeof(vType), nnzCount, fp);
+    fwrite(ind, sizeof(vType), nnzCount, fp);
 
     valType* val = matrix->getValues();
-    fwrite (val, sizeof(valType), nnzCount, fp);
+    fwrite(val, sizeof(valType), nnzCount, fp);
 
     fclose(fp);
 
@@ -198,22 +204,22 @@ SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFil
     vType row, column, nnzCount;
     bool isPatternSymmetric, isSymmetric;
 
-    fread (&row, sizeof(vType), 1, fp);
-    fread (&column, sizeof(vType), 1, fp);
-    fread (&nnzCount, sizeof(vType), 1, fp);
-    fread (&isPatternSymmetric, sizeof(bool), 1, fp);
-    fread (&isSymmetric, sizeof(bool), 1, fp);
+    fread(&row, sizeof(vType), 1, fp);
+    fread(&column, sizeof(vType), 1, fp);
+    fread(&nnzCount, sizeof(vType), 1, fp);
+    fread(&isPatternSymmetric, sizeof(bool), 1, fp);
+    fread(&isSymmetric, sizeof(bool), 1, fp);
 
     SparseMatrix* matrix = new SparseMatrix(name, row, column, nnzCount, isSymmetric, isPatternSymmetric);
 
     vType* ptr = matrix->getPtr();
-    fread (ptr, sizeof(vType), (row + 1), fp);
+    fread(ptr, sizeof(vType), (row + 1), fp);
 
     vType* ind = matrix->getInd();
-    fread (ind, sizeof(vType), nnzCount, fp);
+    fread(ind, sizeof(vType), nnzCount, fp);
 
     valType* val = matrix->getValues();
-    fread (val, sizeof(valType), nnzCount, fp);
+    fread(val, sizeof(valType), nnzCount, fp);
     fclose(fp);
     double end_time = omp_get_wtime();
     logger.logReadingMatrixBinary(matrix, end_time - start_time);
@@ -243,8 +249,8 @@ bool SparseVizIO::readMatrixOrderingFromBinaryFile(const std::string& binaryFile
         *rowIPermutation = new vType[nRow];
         *colIPermutation = new vType[nCol];
 
-        fread (*rowIPermutation, sizeof(vType), nRow, fp);
-        fread (*colIPermutation, sizeof(vType), nRow, fp);
+        fread(*rowIPermutation, sizeof(vType), nRow, fp);
+        fread(*colIPermutation, sizeof(vType), nRow, fp);
 
         fclose(fp);
 
@@ -262,8 +268,8 @@ void SparseVizIO::writeMatrixOrderingToBinaryFile(const std::string &binaryFileN
         throw std::runtime_error(binaryFileName + ": Cannot open the output file!");
     }
 
-    fwrite (rowIPermutation, sizeof(vType), nRow, fp);
-    fwrite (colIPermutation, sizeof(vType), nCol, fp);
+    fwrite(rowIPermutation, sizeof(vType), nRow, fp);
+    fwrite(colIPermutation, sizeof(vType), nCol, fp);
 
     fclose(fp);
 }
@@ -283,47 +289,166 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
     double start_time = omp_get_wtime();
 
-    std::ifstream file(marketFileName);
-    std::string line;
-    std::getline(file, line);
-    std::vector<std::string> lineSplitted = split(line, ' ');
+    int fd = open(marketFileName.c_str(), O_RDONLY);
+    struct stat sb;
+    if (fd == -1)
+    {
+        throw std::runtime_error("File " + marketFileName + " could not be opened.");
+    }
+    if (fstat(fd, &sb) == -1)
+    {
+        throw std::runtime_error("Error occured trying to get the information related to " + marketFileName + ".");
+    }
+    char* addr = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (addr == MAP_FAILED)
+    {
+        throw std::runtime_error("Mapping of the file: " + marketFileName + " into memory has failed.");
+    }
+
+    char* start = addr;
+    while ((*start) == '\n')
+    {
+        ++start;
+    }
+    char* end = addr + sb.st_size;
+    while ((*(end - 1)) == '\n')
+    {
+        --end;
+    }
+
+    std::string firstLine = getLine(start);
+    std::vector<std::string> firstLineSplitted = split(firstLine, ' ');
 
     vType order;
-    order = lineSplitted.size() - 1;
+    order = firstLineSplitted.size() - 1;
     vType* dims = new vType[order];
     memset(dims, 0, sizeof(vType) * order);
     eType nnz = 0;
 
     std::vector<vType> storage;
-    std::vector<valType> values;
+    std::vector<valType > values;
     for (int i = 0; i < order; ++i)
     {
-        storage.push_back(std::stoul(lineSplitted[i]) - 1);
+        vType coord = std::stoul(firstLineSplitted[i]) - 1;
+        dims[i] = coord + 1;
+        storage.push_back(coord);
     }
-    values.push_back(std::stod(lineSplitted[order]));
+    values.push_back(std::stod(firstLineSplitted[order]));
     ++nnz;
 
-    while (std::getline(file, line))
-    {
-        lineSplitted = split(line, ' ');
-        for (int i = 0; i < order; ++i)
-        {
-            vType coord = std::stoul(lineSplitted[i]) - 1;
-            if ((coord + 1) > dims[i])
-            {
-                dims[i] = coord + 1;
-            }
-            storage.push_back(coord);
-        }
-        values.push_back(std::stod(lineSplitted[order]));
-        ++nnz;
-    }
+    unsigned total = end - start;
+    unsigned threadCount = omp_get_max_threads();
+    unsigned long long chunkSize = std::ceil(static_cast<double>(total) / threadCount);
 
-    valType* valuesArr = new valType[nnz];
-    memcpy(valuesArr, values.data(), sizeof(valType) * nnz);
+#pragma omp parallel num_threads(threadCount) default(none) shared(threadCount, order, dims, nnz, storage, values, start, end, chunkSize)
+    {
+        unsigned myID = omp_get_thread_num();
+        char* myAddrStart;
+        char* myAddrEnd;
+
+        // start positioning
+        if (myID == 0)
+        {
+            myAddrStart = start;
+        }
+        else
+        {
+            myAddrStart = start + myID * chunkSize;
+            while (myAddrStart < end && *(myAddrStart - 1) != '\n')
+            {
+                ++myAddrStart;
+            }
+        }
+
+        // end positioning
+        if (myID == threadCount - 1)
+        {
+            myAddrEnd = end;
+        }
+        else
+        {
+            myAddrEnd = start + (myID + 1) * chunkSize;
+            while (myAddrEnd < end && *myAddrEnd != '\n')
+            {
+                ++myAddrEnd;
+            }
+        }
+
+        // ensuring that the subsequent threads do not capture the same 2 lines into their chunk
+        if (myID < threadCount - 1)
+        {
+            char* nextThreadStart = start + (myID + 1) * chunkSize;
+            while (nextThreadStart < end && *(nextThreadStart - 1) != '\n')
+            {
+                ++nextThreadStart;
+            }
+            if (myAddrEnd > nextThreadStart)
+            {
+                myAddrEnd = nextThreadStart - 1;
+            }
+        }
+
+        // thread private t densor
+        vType* t_dims = new vType[order];
+        memset(t_dims, 0, sizeof(vType) * order);
+        eType t_nnz = 0;
+
+        std::vector<vType> t_storage;
+        std::vector<valType > t_values;
+        //
+
+        std::string line;
+        std::vector<std::string> lineSplitted;
+        while (myAddrStart < myAddrEnd)
+        {
+            line = getLine(myAddrStart);
+            lineSplitted = split(line, ' ');
+            if (lineSplitted.size() != (order + 1)) continue;
+            for (int i = 0; i < order; ++i)
+            {
+                vType coord = std::stoul(lineSplitted[i]) - 1;
+                if ((coord + 1) > t_dims[i])
+                {
+                    t_dims[i] = coord + 1;
+                }
+                t_storage.push_back(coord);
+            }
+            t_values.push_back(std::stod(lineSplitted[order]));
+            ++t_nnz;
+        }
+
+        #pragma omp critical
+        {
+            nnz += t_nnz;
+            for (int i = 0; i < order; ++i)
+            {
+                if (t_dims[i] > dims[i])
+                {
+                    dims[i] = t_dims[i];
+                }
+            }
+
+            for (int i = 0; i < t_nnz * order; ++i)
+            {
+                storage.push_back(t_storage[i]);
+            }
+
+            for (int i = 0; i < t_nnz; ++i)
+            {
+                values.push_back(t_values[i]);
+            }
+        };
+
+        delete[] t_dims;
+    };
+
+    close(fd);
+    munmap(addr, sb.st_size);
+
     vType* storageArr = new vType[nnz * order];
     memcpy(storageArr, storage.data(), sizeof(vType) * nnz * order);
-
+    valType* valuesArr = new valType[nnz];
+    memcpy(valuesArr, values.data(), sizeof(valType) * nnz);
     tensor = new SparseTensorCOO(tensorName, order, dims, nnz, valuesArr, storageArr);
 
     double end_time = omp_get_wtime();

@@ -8,6 +8,11 @@
 
 KernelResult TensorKernelFunction::operator()(const SparseTensor& A)
 {
+    if (KERNEL_PERFORMANCE_LOG)
+    {
+        sparseVizPerformance->pausePerf();
+    }
+
     this->determineOMPSchedule();
 
     std::vector<double> durations;
@@ -19,6 +24,11 @@ KernelResult TensorKernelFunction::operator()(const SparseTensor& A)
             omp_set_num_threads(threadCounts[i]);
             for (int r = 0; r != nRun; ++r)
             {
+                if (KERNEL_PERFORMANCE_LOG && r == nIgnore)
+                {
+                    sparseVizPerformance->continuePerf();
+                }
+
                 this->preprocess(A);
                 double start = omp_get_wtime();
                 this->functionBody(A, r);

@@ -26,7 +26,8 @@ class SparseMatrix;
 class SparseTensor;
 class SparseVizEngine;
 
-extern SparseVizLogger logger;    //!< Logger that is used for logging purposes especially when the operation needs to be logged onto the .csv file.
+extern SparseVizLogger* logger;    //!< Logger that is used for logging purposes especially when the operation needs to be logged onto the .csv file.
+extern SparseVizPerformance* sparseVizPerformance;
 extern bool TIMING_LOG;    //!< Indicates whether or not timing should be logged into terminal | Default = true.
 extern std::string PROJECT_DIR;    //!< The path of the root project directory.
 extern double MAX_TIME_BEFORE_ABORTING_ORDERING;    //!< Maximum time dedicated to orderings before they are forcefully aborted | Default = 1000.
@@ -47,6 +48,8 @@ extern std::string CHART_TYPE; //!< Determines the chart_type visualization file
 extern unsigned int MAX_DIM;    //!< Maximum dimension that can be seen in the visualization files | Default = 64.
 extern std::string TEST_CONFIG;
 extern std::string TEST_DIRECTORY;
+extern bool ORDERING_PERFORMANCE_LOG;
+extern bool KERNEL_PERFORMANCE_LOG;
 // #define TEST
 
 enum TensorType

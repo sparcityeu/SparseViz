@@ -320,13 +320,23 @@ void SparseVizEngine::runMatrixKernels()
                 }
                 for (auto& kernel: m_MatrixKernels)
                 {
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        std::vector<CPUBenchmarkSettings> settings = getSettings();
+                        sparseVizPerformance->activatePerf(settings.data(), settings.size());
+                    }
                     KernelResult result = (*kernel)(*matrixConstructed);
+                    SparseVizPerformance::OperationResults operationResults;
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        operationResults = sparseVizPerformance->deactivatePerf();
+                    }
                     if (result.durations.empty())
                     {
                         continue;
                     }
                     orderingPtr->pushKernelResult(result);
-                    logger.logRunningMatrixKernel(result, orderingPtr);
+                    logger->logRunningMatrixKernel(result, orderingPtr, operationResults);
                 }
                 delete matrixConstructed;
             }
@@ -335,13 +345,23 @@ void SparseVizEngine::runMatrixKernels()
                 const SparseMatrix& matrix = orderingPtr->getMatrix();
                 for (auto& kernel: m_MatrixKernels)
                 {
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        std::vector<CPUBenchmarkSettings> settings = getSettings();
+                        sparseVizPerformance->activatePerf(settings.data(), settings.size());
+                    }
                     KernelResult result = (*kernel)(matrix);
+                    SparseVizPerformance::OperationResults operationResults;
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        operationResults = sparseVizPerformance->deactivatePerf();
+                    }
                     if (result.durations.empty())
                     {
                         continue;
                     }
                     orderingPtr->pushKernelResult(result);
-                    logger.logRunningMatrixKernel(result, orderingPtr);
+                    logger->logRunningMatrixKernel(result, orderingPtr, operationResults);
                 }
             }
         }
@@ -380,7 +400,7 @@ void SparseVizEngine::runGPUMatrixKernels()
                         continue;
                     }
                     orderingPtr->pushGPUKernelResult(result);
-                    logger.logRunningGPUMatrixKernel(result, orderingPtr);
+                    logger->logRunningGPUMatrixKernel(result, orderingPtr);
                 }
                 delete matrixConstructed;
             }
@@ -395,7 +415,7 @@ void SparseVizEngine::runGPUMatrixKernels()
                         continue;
                     }
                     orderingPtr->pushGPUKernelResult(result);
-                    logger.logRunningGPUMatrixKernel(result, orderingPtr);
+                    logger->logRunningGPUMatrixKernel(result, orderingPtr);
                     delete kernel;
                 }
             }
@@ -436,7 +456,7 @@ void SparseVizEngine::runGPUTensorKernels()
                         continue;
                     }
                     orderingPtr->pushGPUKernelResult(result);
-                    logger.logRunningGPUTensorKernel(result, orderingPtr);
+                    logger->logRunningGPUTensorKernel(result, orderingPtr);
                 }
                 delete tensorConstructed;
             }
@@ -451,7 +471,7 @@ void SparseVizEngine::runGPUTensorKernels()
                         continue;
                     }
                     orderingPtr->pushGPUKernelResult(result);
-                    logger.logRunningGPUTensorKernel(result, orderingPtr);
+                    logger->logRunningGPUTensorKernel(result, orderingPtr);
                     delete kernel;
                 }
             }
@@ -466,7 +486,7 @@ SparseMatrix* SparseVizEngine::constructOrderedMatrix(MatrixOrdering* ordering)
     SparseMatrix *orderedMatrix = new SparseMatrix(ordering->getMatrix());
     orderedMatrix->order(ordering->getRowIPermutation(), ordering->getColIPermutation(), ordering->getOrderingName());
     double endTime = omp_get_wtime();
-    logger.logConstructingOrderedMatrix(ordering, endTime - startTime);
+    logger->logConstructingOrderedMatrix(ordering, endTime - startTime);
     return orderedMatrix;
 }
 
@@ -496,13 +516,23 @@ void SparseVizEngine::runTensorKernels()
                 }
                 for (auto& kernel: m_TensorKernels)
                 {
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        std::vector<CPUBenchmarkSettings> settings = getSettings();
+                        sparseVizPerformance->activatePerf(settings.data(), settings.size());
+                    }
                     KernelResult result = (*kernel)(*tensorConstructed);
+                    SparseVizPerformance::OperationResults operationResults;
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        operationResults = sparseVizPerformance->deactivatePerf();
+                    }
                     if (result.durations.empty())
                     {
                         continue;
                     }
                     orderingPtr->pushKernelResult(result);
-                    logger.logRunningTensorKernel(result, orderingPtr);
+                    logger->logRunningTensorKernel(result, orderingPtr, operationResults);
                 }
                 delete tensorConstructed;
             }
@@ -511,13 +541,23 @@ void SparseVizEngine::runTensorKernels()
                 const SparseTensor& tensor = orderingPtr->getTensor();
                 for (auto& kernel: m_TensorKernels)
                 {
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        std::vector<CPUBenchmarkSettings> settings = getSettings();
+                        sparseVizPerformance->activatePerf(settings.data(), settings.size());
+                    }
                     KernelResult result = (*kernel)(tensor);
+                    SparseVizPerformance::OperationResults operationResults;
+                    if (KERNEL_PERFORMANCE_LOG)
+                    {
+                        operationResults = sparseVizPerformance->deactivatePerf();
+                    }
                     if (result.durations.empty())
                     {
                         continue;
                     }
                     orderingPtr->pushKernelResult(result);
-                    logger.logRunningTensorKernel(result, orderingPtr);
+                    logger->logRunningTensorKernel(result, orderingPtr, operationResults);
                 }
             }
         }
@@ -529,7 +569,7 @@ SparseTensor *SparseVizEngine::constructOrderedTensor(TensorOrdering* ordering)
     double startTime = omp_get_wtime();
     SparseTensor* orderedTensor = ordering->getTensor().generateOrderedTensor(ordering->getOrderedDimensions(), ordering->getOrderingName(), ordering->getActiveModes());
     double endTime = omp_get_wtime();
-    logger.logConstructingOrderedTensor(ordering, endTime - startTime);
+    logger->logConstructingOrderedTensor(ordering, endTime - startTime);
     return orderedTensor;
 }
 

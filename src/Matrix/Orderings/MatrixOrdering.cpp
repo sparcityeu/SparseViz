@@ -77,15 +77,25 @@ void MatrixOrdering::generateOrdering(bool writeOrdering)
 {
     if (!USE_EXISTING_ORDERINGS || !this->readOrdering())
     {
-        double start_time = omp_get_wtime();
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            std::vector<CPUBenchmarkSettings> settings = getSettings();
+            sparseVizPerformance->activatePerf(settings.data(), settings.size());
+        }
 
+        double start_time = omp_get_wtime();
         this->checkOrderingSupportingStatus();
         this->orderingFunction();
         this->transformGeneratedPermutation();
         this->checkPermutationCorrectness();
-
         double end_time = omp_get_wtime();
-        logger.logMatrixOrdering(this, end_time - start_time);
+
+        SparseVizPerformance::OperationResults results;
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            results = sparseVizPerformance->deactivatePerf();
+        }
+        logger->logMatrixOrdering(this, end_time - start_time, results);
 
         if(writeOrdering && EXPORT_ORDERINGS)
         {
@@ -136,7 +146,7 @@ bool MatrixOrdering::readOrdering()
     double end_time = omp_get_wtime();
 
     if (ret) {
-        logger.logReadingMatrixOrdering(this, end_time - start_time);
+        logger->logReadingMatrixOrdering(this, end_time - start_time);
     }
 
     return ret;
@@ -151,7 +161,7 @@ void MatrixOrdering::writeOrdering()
     SparseVizIO::writeMatrixOrderingToBinaryFile(binaryFileName, rowIPermutation, colIPermutation, this->getMatrix().getRowCount(), this->getMatrix().getColCount());
     double end_time = omp_get_wtime();
 
-    logger.logWritingMatrixOrdering(this, end_time - start_time);
+    logger->logWritingMatrixOrdering(this, end_time - start_time);
 }
 
 void MatrixOrdering::checkPermutationCorrectness()

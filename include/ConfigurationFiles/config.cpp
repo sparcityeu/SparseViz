@@ -3,7 +3,8 @@
 #include "SparseVizEngine.h"
 
 
-SparseVizLogger logger;
+SparseVizLogger* logger = new SparseVizLogger;
+SparseVizPerformance* sparseVizPerformance = new SparseVizPerformance;
 bool TIMING_LOG = true;
 std::string PROJECT_DIR = "-1";
 double MAX_TIME_BEFORE_ABORTING_ORDERING = 1000;
@@ -26,6 +27,8 @@ std::string TEST_DIRECTORY = "/home/users/kaya/SparseViz/TestFiles/";
 std::string TEST_CONFIG = TEST_DIRECTORY + "template_test_file";
 TensorType TENSOR_STORAGE_TYPE;
 BlockType BLOCK_SIZE;
+bool ORDERING_PERFORMANCE_LOG;
+bool KERNEL_PERFORMANCE_LOG;
 
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
@@ -43,9 +46,11 @@ ConfigFileReader::~ConfigFileReader()
 {
     m_File.close();
 #ifndef TEST
-    logger.createCSVFile(PROJECT_DIR + m_LogFilePath);
+    logger->createCSVFile(PROJECT_DIR + m_LogFilePath);
 #endif
     delete m_Engine;
+    delete sparseVizPerformance;
+    delete logger;
 }
 
 void ConfigFileReader::readConfigFile()
@@ -362,6 +367,14 @@ void ConfigFileReader::readSetting(const std::string& line)
         {
             throw std::runtime_error("Invalid format for BLOCK_SIZE");
         }
+    }
+    else if (lineSplitted[0] == "ORDERING_PERFORMANCE_LOG")
+    {
+        ORDERING_PERFORMANCE_LOG = (lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
+    }
+    else if (lineSplitted[0] == "KERNEL_PERFORMANCE_LOG")
+    {
+        KERNEL_PERFORMANCE_LOG = (lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
     }
 }
 

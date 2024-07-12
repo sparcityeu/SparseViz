@@ -140,7 +140,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     matrix = new SparseMatrix(matrixName, row, column, nnz, storage, values);
     delete[] storage;
 
-    logger.logReadingMatrixMarket(matrix, end_time - start_time);
+    logger->logReadingMatrixMarket(matrix, end_time - start_time);
 
     // Writing the matrix into a binary file to accelerate the speed at which the matrix will be read next time
     SparseVizIO::writeMatrixToBinaryFile(binaryFileName, matrix);
@@ -183,7 +183,7 @@ void SparseVizIO::writeMatrixToBinaryFile(const std::string &binaryFileName, Spa
     fclose(fp);
 
     double end_time = omp_get_wtime();
-    logger.logWritingMatrixBinary(matrix, end_time - start_time);
+    logger->logWritingMatrixBinary(matrix, end_time - start_time);
 }
 
 SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFileName, const std::string& name)
@@ -222,7 +222,7 @@ SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFil
     fread(val, sizeof(valType), nnzCount, fp);
     fclose(fp);
     double end_time = omp_get_wtime();
-    logger.logReadingMatrixBinary(matrix, end_time - start_time);
+    logger->logReadingMatrixBinary(matrix, end_time - start_time);
     return matrix;
 }
 
@@ -388,7 +388,7 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
             }
         }
 
-        // thread private t densor
+        // thread private tensor
         vType* t_dims = new vType[order];
         memset(t_dims, 0, sizeof(vType) * order);
         eType t_nnz = 0;
@@ -453,7 +453,7 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
     double end_time = omp_get_wtime();
 
-    logger.logReadingTensorMarket(tensor, end_time - start_time);
+    logger->logReadingTensorMarket(tensor, end_time - start_time);
 
     SparseVizIO::writeTensorToBinaryFile(binaryFileName, tensor);
 
@@ -487,7 +487,7 @@ void SparseVizIO::writeTensorToBinaryFile(const std::string &binaryFileName, Spa
 
     double end_time = omp_get_wtime();
 
-    logger.logWritingTensorBinary(tensor, end_time - start_time);
+    logger->logWritingTensorBinary(tensor, end_time - start_time);
 }
 
 SparseTensor *SparseVizIO::readTensorFromBinaryFile(const std::string &binaryFileName, const std::string& name)
@@ -514,7 +514,7 @@ SparseTensor *SparseVizIO::readTensorFromBinaryFile(const std::string &binaryFil
 
     double end_time = omp_get_wtime();
 
-    logger.logReadingTensorBinary(tensor, end_time - start_time);
+    logger->logReadingTensorBinary(tensor, end_time - start_time);
 
     return tensor;
 }

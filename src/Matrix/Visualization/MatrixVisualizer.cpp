@@ -449,7 +449,7 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
     {
         stats[i].matrixName = orderings[i]->getMatrix().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger.logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     std::string filePath;
@@ -1315,7 +1315,7 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
     {
         stats[i].matrixName = orderings[i]->getMatrix().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger.logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     std::string filePath;

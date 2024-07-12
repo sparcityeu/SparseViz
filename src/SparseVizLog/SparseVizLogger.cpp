@@ -64,13 +64,33 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
 
     if (!m_MatrixOrdering.empty())
     {
+        // Metrics
         csvFile << "Operation: Matrix Ordering\n";
         csvFile << "Ordering Name\tMatrix Name\tOrdering Price\tOrdering Rectangular Support\tOrdering Pattern Unsymmetric Support\tMatrix Row Count\tMatrix Column Count\tMatrix NNZ Count\tMatrix Symmetric\tMatrix Pattern "
-                   "Symmetric\tMatrix Square\tDuration\n";
-        for (const auto& logEntry : m_MatrixOrdering)
+                   "Symmetric\tMatrix Square\tDuration\t";
+        if (!m_MatrixOrderingResults.empty())
         {
-            csvFile << logEntry << "\n";
+            for (const auto& result: m_MatrixOrderingResults[0])
+            {
+                csvFile << result.first << '\t';
+            }
         }
+        csvFile << '\n';
+
+        // Results
+        for (size_t i = 0; i < m_MatrixOrdering.size(); ++i)
+        {
+            csvFile << m_MatrixOrdering[i] << '\t';
+            if (!m_MatrixOrderingResults.empty())
+            {
+                for (const auto& result: m_MatrixOrderingResults[i])
+                {
+                    csvFile << result.second.second << '\t';
+                }
+            }
+            csvFile << '\n';
+        }
+
         csvFile << "\n";
     }
 
@@ -181,7 +201,7 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
 
     if (!m_TensorOrdering.empty())
     {
-        // First Line (Metrics)
+        // Metrics
         csvFile << "Operation: Tensor Ordering\n";
         unsigned long maxDim = 0;
         for (auto& logEntry : m_TensorOrdering)
@@ -196,19 +216,25 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
             csvFile << "Dimension: " << i << '\t';
         }
         csvFile << "Tensor NNZ Count\tDuration\t";
-        for (const auto& result: m_TensorOrderingResults[0])
+        if (!m_TensorOrderingResults.empty())
         {
-            csvFile << result.first << '\t';
+            for (const auto& result: m_TensorOrderingResults[0])
+            {
+                csvFile << result.first << '\t';
+            }
         }
         csvFile << '\n';
 
-        // Other Lines (Results)
+        // Results
         for (size_t i = 0; i < m_TensorOrdering.size(); ++i)
         {
             csvFile << m_TensorOrdering[i] << '\t';
-            for (const auto& result: m_TensorOrderingResults[i])
+            if (!m_TensorOrderingResults.empty())
             {
-                csvFile << result.second.second << '\t';
+                for (const auto& result: m_TensorOrderingResults[i])
+                {
+                    csvFile << result.second.second << '\t';
+                }
             }
             csvFile << '\n';
         }
@@ -294,6 +320,13 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         {
             csvFile << "Thread Number: " << std::to_string(*i) << '\t';
         }
+        if (!m_MatrixOrderingResults.empty())
+        {
+            for (const auto& result: m_MatrixOrderingResults[0])
+            {
+                csvFile << result.first << '\t';
+            }
+        }
         csvFile << '\n';
         for (int a = 0; a != m_RunningMatrixKernel.size(); ++a)
         {
@@ -315,6 +348,13 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
                     csvFile << "-\t";
                 }
             }
+            if (!m_MatrixOrderingResults.empty())
+            {
+                for (const auto& result: m_MatrixOrderingResults[a])
+                {
+                    csvFile << result.second.second << '\t';
+                }
+            }
             csvFile << '\n';
         }
         csvFile << "\n";
@@ -328,6 +368,13 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         for (auto i = m_TensorKernelThreadCounts.begin(); i != m_TensorKernelThreadCounts.end(); ++i)
         {
             csvFile << "Thread Number: " << std::to_string(*i) << '\t';
+        }
+        if (!m_TensorOrderingResults.empty())
+        {
+            for (const auto& result: m_TensorOrderingResults[0])
+            {
+                csvFile << result.first << '\t';
+            }
         }
         csvFile << '\n';
         for (int a = 0; a != m_RunningTensorKernel.size(); ++a)
@@ -348,6 +395,13 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
                 if (!found)
                 {
                     csvFile << "-\t";
+                }
+            }
+            if (!m_TensorOrderingResults.empty())
+            {
+                for (const auto& result: m_TensorOrderingResults[a])
+                {
+                    csvFile << result.second.second << '\t';
                 }
             }
             csvFile << '\n';
@@ -428,7 +482,7 @@ void SparseVizLogger::logWritingMatrixBinary(SparseMatrix *matrix, double durati
     }
 }
 
-void SparseVizLogger::logMatrixOrdering(MatrixOrdering *ordering, double duration)
+void SparseVizLogger::logMatrixOrdering(MatrixOrdering *ordering, double duration, SparseVizPerformance::OperationResults operationResults)
 {
 #pragma omp critical
     {
@@ -437,6 +491,10 @@ void SparseVizLogger::logMatrixOrdering(MatrixOrdering *ordering, double duratio
                                           boolToString(ordering->hasRectangularSupport()) + '\t' + boolToString(ordering->hasPatternUnsymmetricSupport())
                                           + '\t' + std::to_string(ordering->getMatrix().getRowCount()) + '\t' + std::to_string(ordering->getMatrix().getColCount()) + '\t' + std::to_string(ordering->getMatrix().getNNZCount()) + '\t' +
                                           boolToString(ordering->getMatrix().isSymmetric()) + '\t' + boolToString(ordering->getMatrix().isPatternSymmetric()) + '\t' + boolToString(ordering->getMatrix().isSquare()) + '\t' + std::to_string(duration));
+        if (!operationResults.empty())
+        {
+            m_MatrixOrderingResults.push_back(operationResults);
+        }
     }
 }
 
@@ -554,7 +612,7 @@ void SparseVizLogger::logWritingTensorBinary(SparseTensor *tensor, double durati
     }
 }
 
-void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duration, SparseVizPerformance* perf)
+void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duration, SparseVizPerformance::OperationResults operationResults)
 {
 #pragma omp critical
     {
@@ -572,9 +630,10 @@ void SparseVizLogger::logTensorOrdering(TensorOrdering *ordering, double duratio
 
         m_TensorOrdering.push_back(std::to_string(ordering->getTensor().getOrder()) + '|' + logString);
 
-        perf->calculateResults();
-        const SparseVizPerformance::Results results = perf->getResults();
-        m_TensorOrderingResults.push_back(results);
+        if (!operationResults.empty())
+        {
+            m_TensorOrderingResults.push_back(operationResults);
+        }
     }
 }
 
@@ -638,7 +697,7 @@ void SparseVizLogger::logConstructingOrderedTensor(TensorOrdering* ordering, dou
     }
 }
 
-void SparseVizLogger::logRunningMatrixKernel(const KernelResult& kernelResult, MatrixOrdering* ordering)
+void SparseVizLogger::logRunningMatrixKernel(const KernelResult& kernelResult, MatrixOrdering* ordering, SparseVizPerformance::OperationResults operationResults)
 {
 #pragma omp critical
     {
@@ -666,6 +725,10 @@ void SparseVizLogger::logRunningMatrixKernel(const KernelResult& kernelResult, M
         m_RunningMatrixKernel.push_back(kernelResult.kernelName + '\t' + ordering->getMatrix().getName() + '\t' + ordering->getOrderingName() + '\t' + kernelResult.schedulingPolicy + '\t' + std::to_string(kernelResult.chunkSize));
         m_ThreadCountsForEachMatrixKernel.push_back(kernelResult.threadCounts);
         m_DurationsForEachMatrixKernel.push_back(kernelResult.durations);
+        if (!operationResults.empty())
+        {
+            m_MatrixKernelResults.push_back(operationResults);
+        }
     }
 }
 
@@ -684,7 +747,7 @@ void SparseVizLogger::logRunningGPUMatrixKernel(const GPUKernelResult &kernelRes
     }
 }
 
-void SparseVizLogger::logRunningTensorKernel(const KernelResult& kernelResult, TensorOrdering* ordering)
+void SparseVizLogger::logRunningTensorKernel(const KernelResult& kernelResult, TensorOrdering* ordering, SparseVizPerformance::OperationResults operationResults)
 {
 #pragma omp critical
     {
@@ -712,6 +775,10 @@ void SparseVizLogger::logRunningTensorKernel(const KernelResult& kernelResult, T
         m_RunningTensorKernel.push_back(kernelResult.kernelName + '\t' + ordering->getTensor().getName() + '\t' + ordering->getOrderingName() + '\t' + kernelResult.schedulingPolicy + '\t' + std::to_string(kernelResult.chunkSize));
         m_ThreadCountsForEachTensorKernel.push_back(kernelResult.threadCounts);
         m_DurationsForEachTensorKernel.push_back(kernelResult.durations);
+        if (!operationResults.empty())
+        {
+            m_TensorKernelResults.push_back(operationResults);
+        }
     }
 }
 

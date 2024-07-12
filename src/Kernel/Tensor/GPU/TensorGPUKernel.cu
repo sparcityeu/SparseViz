@@ -4,7 +4,7 @@
 
 void TensorGPUKernel::postprocess(const SparseTensor& A, int iter)
 {
-    logger.makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
+    logger->makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
 }
 
 GPUKernelResult TensorGPUKernel::operator()(const SparseTensor& A)

@@ -4,7 +4,7 @@
 
 void MatrixGPUKernel::postprocess(const SparseMatrix& A, int iter)
 {
-    logger.makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
+    logger->makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
 }
 
 GPUKernelResult MatrixGPUKernel::operator()(const SparseMatrix& A)

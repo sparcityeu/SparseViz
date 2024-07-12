@@ -235,7 +235,7 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     const valType* values = tensor.getValues();
     const vType nnzCount = tensor.getNNZ();
 
-    logger.makeSilentLog( "visualizeTensorOrderings is started for " + filename);
+    logger->makeSilentLog( "visualizeTensorOrderings is started for " + filename);
 
     const vType dims[3] = {full_dims[active_modes[0]], full_dims[active_modes[1]], full_dims[active_modes[2]]};
 
@@ -374,13 +374,13 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
 
     double end_time = omp_get_wtime();
 
-    logger.makeSilentLog(orderings[0]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+    logger->makeSilentLog(orderings[0]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
     for (int i = 0; i != norder; ++i)
     {
         stats[i].tensorName = orderings[i]->getTensor().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     //std::cout << "Fiber Counts " <<  fiberCounts[0] << " " <<  fiberCounts[1] << " " <<  fiberCounts[2] << std::endl;
@@ -1108,7 +1108,7 @@ html_file << R"(
     </html>
     )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)
@@ -1130,7 +1130,7 @@ html_file << R"(
 void visualizeTensors(TensorOrdering** orderings, int norder) {
     double start_time = omp_get_wtime();
 
-    logger.makeSilentLog( "visualizeTensors is started for " + orderings[0]->getOrderingName());
+    logger->makeSilentLog( "visualizeTensors is started for " + orderings[0]->getOrderingName());
 
     TensorBin ****tensorLists = new TensorBin ***[norder];
     TStatistic stats[norder];
@@ -1248,7 +1248,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
             }
         }
         double end_time = omp_get_wtime();
-        //logger.makeSilentLog(orderings[n]->getOrderingName() + ": " + orderings[n]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+        //logger->makeSilentLog(orderings[n]->getOrderingName() + ": " + orderings[n]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
         for(int d = 0; d < 3; d++) {
             for(vType v = 0; v < fiberMins[d].size(); v++) {
@@ -1275,7 +1275,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 
         stats[n].tensorName = orderings[n]->getTensor().getName();
         stats[n].orderingName = orderings[n]->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
     }
 }
 
@@ -1987,7 +1987,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
     </html>
     )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)
@@ -2008,7 +2008,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 void visualizeFullSparseTensor(TensorOrdering* ordering) {
     double start_time = omp_get_wtime();
 
-    logger.makeSilentLog( "visualizeTensors is started for " + ordering->getOrderingName() + " " + ordering->getTensor().getName());
+    logger->makeSilentLog( "visualizeTensors is started for " + ordering->getOrderingName() + " " + ordering->getTensor().getName());
     
     int tensor_rank = ordering->getTensor().getOrder();
 
@@ -2140,7 +2140,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
             }
         }
         double end_time = omp_get_wtime();
-        //logger.makeSilentLog(ordering->getOrderingName() + ": " + ordering->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+        //logger->makeSilentLog(ordering->getOrderingName() + ": " + ordering->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
         for(int d = 0; d < 3; d++) {
             for(vType v = 0; v < fiberMins[d].size(); v++) {
@@ -2167,7 +2167,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
 
         stats[n].tensorName = ordering->getTensor().getName();
         stats[n].orderingName = ordering->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
     }
 }
 
@@ -2885,7 +2885,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
     </html>
     )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)

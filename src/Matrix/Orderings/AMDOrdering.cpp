@@ -22,7 +22,7 @@ void AMDOrdering::orderingFunction()
     int status = amd_order(n, ptrs, ids, i_order,  (double *) NULL, (double *) NULL);
     if (status == AMD_INVALID)
     {
-        logger.makeSilentLog("AMD is performing preprocessing on " + this->getMatrix().getName());
+        logger->makeSilentLog("AMD is performing preprocessing on " + this->getMatrix().getName());
         int* r_ptrs = new int[n + 1];
         int* r_ids = new int[ptrs[n]];
         if (amd_preprocess (n, ptrs, ids, r_ptrs, r_ids) == AMD_OK)
@@ -39,7 +39,7 @@ void AMDOrdering::orderingFunction()
     }
     else
     {
-        logger.makeSilentLog("AMD is failed on " + this->getMatrix().getName());
+        logger->makeSilentLog("AMD is failed on " + this->getMatrix().getName());
         throw std::logic_error("AMD is failed on " + this->getMatrix().getName());
     }
 }

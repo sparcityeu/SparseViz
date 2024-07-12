@@ -8,11 +8,16 @@
 
 void MatrixKernelFunction::postprocess(const SparseMatrix& A, int iter)
 {
-    logger.makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
+    logger->makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
 }
 
 KernelResult MatrixKernelFunction::operator()(const SparseMatrix& A)
 {
+    if (KERNEL_PERFORMANCE_LOG)
+    {
+        sparseVizPerformance->pausePerf();
+    }
+
     this->determineOMPSchedule();
 
     std::vector<double> durations;
@@ -24,6 +29,11 @@ KernelResult MatrixKernelFunction::operator()(const SparseMatrix& A)
             omp_set_num_threads(threadCounts[i]);
             for (int r = 0; r != nRun; ++r)
             {
+                if (KERNEL_PERFORMANCE_LOG && r == nIgnore)
+                {
+                    sparseVizPerformance->continuePerf();
+                }
+
                 this->preprocess(A);
                 double start = omp_get_wtime();
                 this->functionBody(A, r);

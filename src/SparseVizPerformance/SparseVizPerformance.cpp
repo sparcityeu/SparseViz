@@ -5,20 +5,33 @@
 #include "SparseVizPerformance.h"
 
 
-std::vector<BenchmarkSettings> getSettings()
+std::vector<CPUBenchmarkSettings> getSettings()
 {
-    std::vector<BenchmarkSettings> settings;
+    std::vector<CPUBenchmarkSettings> settings;
 
-    for (size_t i = 0; i < static_cast<int>(BenchmarkSettings::END); ++i)
+    for (size_t i = 0; i < static_cast<int>(CPUBenchmarkSettings::END); ++i)
     {
-        settings.push_back(static_cast<BenchmarkSettings>(i));
+        settings.push_back(static_cast<CPUBenchmarkSettings>(i));
     }
 
     return settings;
 }
 
-SparseVizPerformance::SparseVizPerformance(BenchmarkSettings* settings, size_t size)
+SparseVizPerformance::SparseVizPerformance()
 {
+    pthread_mutex_init(&m_ResultsLock, NULL);
+}
+
+SparseVizPerformance::~SparseVizPerformance()
+{
+    pthread_mutex_destroy(&m_ResultsLock);
+}
+
+void SparseVizPerformance::activatePerf(CPUBenchmarkSettings* settings, size_t size)
+{
+    pthread_t myID = pthread_self();
+    OperationResults operationResults;
+
     for (size_t i = 0; i < size; ++i)
     {
         struct perf_event_attr pe;
@@ -121,90 +134,122 @@ SparseVizPerformance::SparseVizPerformance(BenchmarkSettings* settings, size_t s
                 continue;
         }
 
-        int fd = perf_event_open(&pe, 0, -1, -1, 0);
+        int fd = SparseVizPerformance::perfEventOpen(&pe, 0, -1, -1, 0);
         if (fd == -1)
         {
             throw std::runtime_error("Failed to open perf event: " + config);
         }
-        m_Results[config] = {fd, 0};
+        operationResults[config] = {fd, 0};
     }
-}
 
-SparseVizPerformance::~SparseVizPerformance()
-{
-    for (auto& result: m_Results)
-    {
-        close(result.second.first);
-    }
-}
-
-void SparseVizPerformance::activatePerf()
-{
-    for (auto& result: m_Results)
+    for (auto& result: operationResults)
     {
         ioctl(result.second.first, PERF_EVENT_IOC_RESET, 0);
         ioctl(result.second.first, PERF_EVENT_IOC_ENABLE, 0);
     }
+
+    pthread_mutex_lock(&m_ResultsLock);
+    m_Results[myID] = operationResults;
+    pthread_mutex_unlock(&m_ResultsLock);
 }
 
-void SparseVizPerformance::deactivatePerf()
+void SparseVizPerformance::continuePerf()
 {
-    for (auto& result: m_Results)
+    pthread_t myID = pthread_self();
+    auto& operationData = m_Results[myID];
+
+    for (auto& result: operationData)
+    {
+        ioctl(result.second.first, PERF_EVENT_IOC_ENABLE, 0);
+    }
+}
+
+void SparseVizPerformance::pausePerf()
+{
+    pthread_t myID = pthread_self();
+    auto& operationData = m_Results[myID];
+
+    for (auto& result: operationData)
     {
         ioctl(result.second.first, PERF_EVENT_IOC_DISABLE, 0);
     }
 }
 
+SparseVizPerformance::OperationResults SparseVizPerformance::deactivatePerf()
+{
+    pthread_t myID = pthread_self();
+
+    for (auto& result: m_Results[myID])
+    {
+        ioctl(result.second.first, PERF_EVENT_IOC_DISABLE, 0);
+    }
+
+    this->calculateResults();
+    OperationResults ret = m_Results[myID];
+
+    for (auto& result: m_Results[myID])
+    {
+        close(result.second.first);
+    }
+
+    pthread_mutex_lock(&m_ResultsLock);
+    m_Results.erase(myID);
+    pthread_mutex_unlock(&m_ResultsLock);
+
+    return ret;
+}
+
 void SparseVizPerformance::calculateResults()
 {
-    for (auto& result: m_Results)
+    pthread_t myID = pthread_self();
+
+    auto& operationResults = m_Results[myID];
+
+    for (auto& result: operationResults)
     {
         unsigned long long count;
         read(result.second.first, &count, sizeof(unsigned long long));
         result.second.second = count;
     }
 
-
-    unsigned long long CPUSeconds = m_Results["CPU Clock"].second;
+    unsigned long long CPUSeconds = operationResults["CPU Clock"].second;
     CPUSeconds /= 1e9;
-    m_Results["CPU Time Passed"] = {-1, CPUSeconds};
+    operationResults["CPU Time Passed"] = {-1, CPUSeconds};
 //    m_Results.erase("CPU Clock");
 
-
     // Calculating Ratios
-    double l1DataMissRatio = calculateRatio(m_Results["L1 Data Cache Misses"].second, m_Results["L1 Data Cache Loads"].second);
-    m_Results["L1 Data Cache Miss Ratio"] = {-1, l1DataMissRatio};
-    m_Results.erase("L1 Data Cache Misses");
-    m_Results.erase("L1 Data Cache Loads");
+    double l1DataMissRatio = this->calculateRatio(operationResults["L1 Data Cache Misses"].second, operationResults["L1 Data Cache Loads"].second);
+    operationResults["L1 Data Cache Miss Ratio"] = {-1, l1DataMissRatio};
+    operationResults.erase("L1 Data Cache Misses");
+    operationResults.erase("L1 Data Cache Loads");
 
-//    double l1InstructionMissRatio = calculateRatio(m_Results["L1 Instruction Cache Misses"].second, m_Results["L1 Instruction Cache Loads"].second);
+//    double l1InstructionMissRatio = this->calculateRatio(m_Results["L1 Instruction Cache Misses"].second, m_Results["L1 Instruction Cache Loads"].second);
 //    m_Results["L1 Instruction Cache Miss Ratio"] = {-1, l1InstructionMissRatio};
 //    m_Results.erase("L1 Instruction Cache Misses");
 //    m_Results.erase("L1 Instruction Cache Loads");
 
-    double llCacheMissRatio = calculateRatio(m_Results["LL Cache Misses"].second, m_Results["LL Cache Loads"].second);
-    m_Results["LL Cache Miss Ratio"] = {-1, llCacheMissRatio};
-    m_Results.erase("LL Cache Misses");
-    m_Results.erase("LL Cache Loads");
+    double llCacheMissRatio = this->calculateRatio(operationResults["LL Cache Misses"].second, operationResults["LL Cache Loads"].second);
+    operationResults["LL Cache Miss Ratio"] = {-1, llCacheMissRatio};
+    operationResults.erase("LL Cache Misses");
+    operationResults.erase("LL Cache Loads");
 
-    double tlbDataMissRatio = calculateRatio(m_Results["TLB Data Misses"].second, m_Results["TLB Data Loads"].second);
-    m_Results["TLB Data Miss Ratio"] = {-1, tlbDataMissRatio};
-    m_Results.erase("TLB Data Misses");
-    m_Results.erase("TLB Data Loads");
+    double tlbDataMissRatio = this->calculateRatio(operationResults["TLB Data Misses"].second, operationResults["TLB Data Loads"].second);
+    operationResults["TLB Data Miss Ratio"] = {-1, tlbDataMissRatio};
+    operationResults.erase("TLB Data Misses");
+    operationResults.erase("TLB Data Loads");
 
-    double tlbInstructionMissRatio = calculateRatio(m_Results["TLB Instruction Misses"].second, m_Results["TLB Instruction Loads"].second);
-    m_Results["TLB Instruction Miss Ratio"] = {-1, tlbInstructionMissRatio};
-    m_Results.erase("TLB Instruction Misses");
-    m_Results.erase("TLB Instruction Loads");
+    double tlbInstructionMissRatio = this->calculateRatio(operationResults["TLB Instruction Misses"].second, operationResults["TLB Instruction Loads"].second);
+    operationResults["TLB Instruction Miss Ratio"] = {-1, tlbInstructionMissRatio};
+    operationResults.erase("TLB Instruction Misses");
+    operationResults.erase("TLB Instruction Loads");
 
-    double branchMissRatio = calculateRatio(m_Results["Branch Misses"].second, m_Results["Branch Instructions"].second);
-    m_Results["Branch Miss Ratio"] = {-1, branchMissRatio};
-    m_Results.erase("Branch Misses");
-    m_Results.erase("Branch Instructions");
-
+    double branchMissRatio = this->calculateRatio(operationResults["Branch Misses"].second, operationResults["Branch Instructions"].second);
+    operationResults["Branch Miss Ratio"] = {-1, branchMissRatio};
+    operationResults.erase("Branch Misses");
+    operationResults.erase("Branch Instructions");
 }
 
-double SparseVizPerformance::calculateRatio(double& dividend, double& divider)
+inline double SparseVizPerformance::calculateRatio(double& dividend, double& divider)
 {
     if (divider == 0)
     {
@@ -214,12 +259,7 @@ double SparseVizPerformance::calculateRatio(double& dividend, double& divider)
     return ((dividend / divider) * 100);
 }
 
-const SparseVizPerformance::Results& SparseVizPerformance::getResults() const
-{
-    return m_Results;
-}
-
-long SparseVizPerformance::perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
+long SparseVizPerformance::perfEventOpen(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
 {
     return syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
 }

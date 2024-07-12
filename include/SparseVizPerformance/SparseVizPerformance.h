@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 
-enum BenchmarkSettings
+enum CPUBenchmarkSettings
 {
     L1DataCacheLoad,
     L1DataCacheMiss,
@@ -43,32 +43,35 @@ enum BenchmarkSettings
     END
 };
 
-std::vector<BenchmarkSettings> getSettings();
+std::vector<CPUBenchmarkSettings> getSettings();
 
 class SparseVizPerformance
 {
 public:
-    typedef std::unordered_map<std::string, std::pair<int, double>> Results; // Key: BenchmarkSettings, Value: {fd, statistic}
+    typedef std::unordered_map<std::string, std::pair<int, double>> OperationResults; // Key: BenchmarkSettings, Value: {fd, statistic}
+    typedef std::unordered_map<pthread_t, OperationResults> Results;
 
 public:
-    SparseVizPerformance(BenchmarkSettings* settings, size_t size);
+    SparseVizPerformance();
     SparseVizPerformance(const SparseVizPerformance& other) = delete;
     SparseVizPerformance& operator=(const SparseVizPerformance& other) = delete;
     SparseVizPerformance(SparseVizPerformance&& other) = delete;
     SparseVizPerformance& operator=(SparseVizPerformance&& other) = delete;
     ~SparseVizPerformance();
 
-    void activatePerf();
-    void deactivatePerf();
+    void activatePerf(CPUBenchmarkSettings* settings, size_t size);
+    void continuePerf();
+    void pausePerf();
+    OperationResults deactivatePerf();
     void calculateResults();
-    [[maybe_unused]] [[nodiscard]] const Results& getResults() const;
 
 private:
-    static long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
-    static double calculateRatio(double& dividend, double& divider);
+    static long perfEventOpen(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags);
+    inline double calculateRatio(double& dividend, double& divider);
 
 private:
-    Results m_Results; // Key: BenchmarkSettings, Value: {fd, statistic}
+    Results m_Results;
+    pthread_mutex_t m_ResultsLock;
 };
 
 

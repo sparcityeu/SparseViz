@@ -7,7 +7,6 @@
 #include "helpers.h"
 #include <string.h>
 #include "SparseVizIO.h"
-#include "SparseVizPerformance.h"
 
 
 TensorOrdering::TensorOrdering(SparseTensor &tensor,  const std::vector<vType>& active_modes, std::string orderingName, unsigned int orderingFunctionPrice)
@@ -66,23 +65,23 @@ void TensorOrdering::generateOrdering(bool writeOrdering)
 {
     if (!USE_EXISTING_ORDERINGS || !this->readOrdering())
     {
-
-        std::vector<BenchmarkSettings> settings = getSettings();
-        SparseVizPerformance* perf = new SparseVizPerformance(settings.data(), settings.size());
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            std::vector<CPUBenchmarkSettings> settings = getSettings();
+            sparseVizPerformance->activatePerf(settings.data(), settings.size());
+        }
 
         double start_time = omp_get_wtime();
-
-        perf->activatePerf();
         this->orderingFunction();
-        perf->deactivatePerf();
-
         this->checkPermutationCorrectness();
-
         double end_time = omp_get_wtime();
 
-        logger.logTensorOrdering(this, end_time - start_time, perf);
-
-        delete perf;
+        SparseVizPerformance::OperationResults results;
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            results = sparseVizPerformance->deactivatePerf();
+        }
+        logger->logTensorOrdering(this, end_time - start_time, results);
 
         if(writeOrdering && EXPORT_ORDERINGS)
         {
@@ -128,7 +127,7 @@ bool TensorOrdering::readOrdering()
     double end_time = omp_get_wtime();
     if (ret)
     {
-        logger.logReadingTensorOrdering(this, end_time - start_time);
+        logger->logReadingTensorOrdering(this, end_time - start_time);
     }
 
     return ret;
@@ -146,7 +145,7 @@ void TensorOrdering::writeOrdering()
     SparseVizIO::writeTensorOrderingToBinaryFile(binaryFileName, tensor.getOrder(), this->getTensor().getDims(), orderedDimensions);
     double end_time = omp_get_wtime();
 
-    logger.logWritingTensorOrdering(this, end_time - start_time);
+    logger->logWritingTensorOrdering(this, end_time - start_time);
 }
 
 void TensorOrdering::calculateOrderingPrice(unsigned int orderingFunctionPrice)

@@ -563,7 +563,7 @@ SparseMatrix SparseMatrix::generateSquareShapedMatrix() const
     squareShapedMatrix.checkSymmetry(false);
 
     double end_time = omp_get_wtime();
-    logger.makeSilentLog("Generating square of a matrix " + m_Name, end_time - start_time);
+    logger->makeSilentLog("Generating square of a matrix " + m_Name, end_time - start_time);
 
     return squareShapedMatrix;
 }

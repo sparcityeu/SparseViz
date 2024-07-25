@@ -74,5 +74,5 @@ void BFS::postprocess(const SparseMatrix& A, int iter) {
             maxlevel = std::max(maxlevel, (int)level[i]);
         }
     }
-    logger.makeSilentLog("Parallel BFS Log - matrix: " + A.getName() + " - iter: " + std::to_string(iter) + " - " + std::to_string(count) + " " + std::to_string(sum/count) + " " + std::to_string(maxlevel));
+    logger->makeSilentLog("Parallel BFS Log - matrix: " + A.getName() + " - iter: " + std::to_string(iter) + " - " + std::to_string(count) + " " + std::to_string(sum/count) + " " + std::to_string(maxlevel));
 }

@@ -1,5 +1,6 @@
 #include "helpers.h"
 
+
 vType calculateBin(vType coordinate, vType dimSize, vType numBins)
 {
     if (dimSize == 0 || numBins == 0)
@@ -45,82 +46,6 @@ std::string escapeSingleQuote(const std::string &input)
             output += input[i];
     }
     return output;
-}
-
-
-// void convertCOOtoCSR(int *coords, float *values, int nnz, int dimX, int *rowPtr, int *colInd, float *sortedValues)
-// {
-//     std::vector<int> indices(nnz);
-//     std::iota(indices.begin(), indices.end(), 0);
-
-//     // sort by first i then j
-//     std::sort(indices.begin(), indices.end(), [&coords](int a, int b)
-//               {
-//         if (coords[2*a] != coords[2*b]) return coords[2*a] < coords[2*b];
-//         return coords[2*a + 1] < coords[2*b + 1]; });
-
-//     for (int i = 0; i < nnz; i++)
-//     {
-//         int sortedIndex = indices[i];
-//         rowPtr[coords[2 * sortedIndex] + 1]++;
-//         colInd[i] = coords[2 * sortedIndex + 1];
-//         sortedValues[i] = values[sortedIndex];
-//     }
-
-//     for (int i = 1; i <= dimX; i++)
-//     {
-//         rowPtr[i] += rowPtr[i - 1];
-//     }
-// }
-
-
-void convertCOOtoCSR_CSC(int *coords, float *values, int nnz, int dimX, int dimY,
-                         int *rowPtr, int *colInd, float *sortedValues,
-                         int *colPtr, int *rowInd)
-{
-    std::vector<int> indices(nnz);
-    std::iota(indices.begin(), indices.end(), 0);
-
-    // Sort by rows x and then columns y
-    std::sort(indices.begin(), indices.end(), [&coords](int a, int b)
-    {
-        if (coords[2*a] != coords[2*b]) return coords[2*a] < coords[2*b];
-        return coords[2*a + 1] < coords[2*b + 1]; });
-
-    // construct CSR
-    std::fill(rowPtr, rowPtr + dimX + 1, 0);
-
-    for (int i = 0; i < nnz; i++)
-    {
-        int sortedIndex = indices[i];
-        rowPtr[coords[2 * sortedIndex] + 1]++;
-        colInd[i] = coords[2 * sortedIndex + 1];
-        sortedValues[i] = values[sortedIndex];
-    }
-
-    for (int i = 1; i <= dimX; i++)
-    {
-        rowPtr[i] += rowPtr[i - 1];
-    }
-
-    // sort by columns y and then rows x
-    std::sort(indices.begin(), indices.end(), [&coords](int a, int b)
-    {
-        if (coords[2*a + 1] != coords[2*b + 1]) return coords[2*a + 1] < coords[2*b + 1];
-        return coords[2*a] < coords[2*b]; });
-
-    // construct CSC
-    std::fill(colPtr, colPtr + dimY + 1, 0);
-    for (int i = 0; i < nnz; i++)
-    {
-        int sortedIndex = indices[i];
-        colPtr[coords[2 * sortedIndex + 1] + 1]++;
-        rowInd[i] = coords[2 * sortedIndex];
-    }
-    for (int i = 1; i <= dimY; i++)
-    {
-        colPtr[i] += colPtr[i - 1];
-    }
 }
 
 
@@ -245,22 +170,14 @@ std::string lowerString(const std::string& s)
 }
 
 
-void countSort(std::vector< std::pair<unsigned, unsigned> >& inputArray, unsigned* permutation) {
-    unsigned N = inputArray.size();
- 
-    // Finding the maximum element of array inputArray[]
-    unsigned M = 0;
-    for (unsigned i = 0; i < N; i++) M = std::max(M, inputArray[i].second);
-
-    // Prepare count array
-    std::vector<unsigned> countArray(M + 1, 0);
-    for (unsigned i = 0; i < N; i++) countArray[inputArray[i].second]++;
-    for (unsigned i = 1; i <= M; i++) countArray[i] += countArray[i - 1];
-
-    // Place the elements to the permutation
-    std::vector<int> outputArray(N);
-    for (unsigned i = N - 1; i < N; i--) {
-        permutation[inputArray[i].first] = countArray[inputArray[i].second] - 1;
-        countArray[inputArray[i].second]--;
+std::string getLine(char*& addr)
+{
+    std::string line;
+    while ((*addr) != '\n')
+    {
+        line += (*addr);
+        ++addr;
     }
+    ++addr;
+    return line;
 }

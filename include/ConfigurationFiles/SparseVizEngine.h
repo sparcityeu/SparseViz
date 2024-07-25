@@ -25,7 +25,7 @@
 #include "DynaDegOrdering.h"
 #include "MinDegOrdering.h"
 #include "TensorNaturalOrdering.h"
-#include "TensorKPartiteOrdering.h"
+#include "COOKPartiteOrdering.h"
 #ifdef RABBIT_AVAILABLE
 #include "RabbitOrdering.h"
 #endif
@@ -41,13 +41,12 @@
 // Tensor Kernels
 #include "TensorKernelFunction.h"
 #include "COOTensorKernel.h"
-
+// Cuda Needed
 #ifdef CUDA_ENABLED
-#include "MatrixGPUKernel.h"
-#include "TensorGPUKernel.h"
 #include "GPUKernelResult.h"
-#include "CudaHelloWorld.h"
-#include "GPUSpmvRowBased.h"
+#include "MatrixGPUKernel.h"
+#include "JackardWeights.h"
+#include "TensorGPUKernel.h"
 #include "COOTensorGPUKernelAoS.h"
 #include "COOTensorGPUKernelSoA.h"
 #endif
@@ -166,33 +165,40 @@ public:
      * @param chunkSize OMP chunk size.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
+     * @param kernelParameters Kernel parameters given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      */
-    void addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore);
+    void addTensorKernel(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& kernelParameters);
 
 #ifdef CUDA_ENABLED
     /*!
      * @brief Adds matrix gpu kernel that is desired to be executed on ordering matrices, typically called by the ConfigFileReader.
-     * @param kernelName The name of the kernel class.
+     * @param kernelClassName The name of the kernel class.
+     * @param kernelName The name of the kernel.
      * @param gridSizes Array of integers indicating the grid sizes with which gpu kernels should be launched.
      * @param blockSizes Array of integers indicating the block sizes with which gpu kernels should be launched.
+     * @param sharedMemorySizes Array of integers indicating the shared memory sizes with which gpu kernels should be launched.
+     * @param kernelParameters The kernel parameters to be given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
      * @warning It is compiled only if CUDA and CUDA compatible device are present in the user machine.
-     * @warning The length of the gridSizes should be equal to the length of the blockSizes as they are zipped while processing.
+     * @warning The length of the gridSizes, blockSizes, and sharedMemorySizes should be equal to each other, as they are zipped while processing.
      */
-    void addGPUMatrixKernel(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore);
+    void addGPUMatrixKernel(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore);
 
     /*!
      * @brief Adds tensor gpu kernel that is desired to be executed on ordering tensors, typically called by the ConfigFileReader.
-     * @param kernelName The name of the kernel class.
+     * @param kernelClassName The name of the kernel class.
+     * @param kernelName The name of the kernel.
      * @param gridSizes Array of integers indicating the grid sizes with which gpu kernels should be launched.
      * @param blockSizes Array of integers indicating the block sizes with which gpu kernels should be launched.
+     * @param sharedMemorySizes Array of integers indicating the shared memory sizes with which gpu kernels should be launched.
+     * @param kernelParameters The kernel parameters to be given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
      * @warning It is compiled only if CUDA and CUDA compatible device are present in the user machine.
-     * @warning The length of the gridSizes should be equal to the length of the blockSizes as they are zipped while processing.
+     * @warning The length of the gridSizes, blockSizes, and sharedMemorySizes should be equal to each other, as they are zipped while processing.
      */
-    void addGPUTensorKernel(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore);
+    void addGPUTensorKernel(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore);
 #endif
 
     /*!
@@ -285,9 +291,10 @@ private:
      * @param chunkSize OMP chunk size.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
+     * @param kernelParameters Kernel parameters given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      * @return TensorKernelFunction abstract class from which every custom tensor kernel class in the SparseViz ecosystem is derived.
      */
-    TensorKernelFunction* tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore);
+    TensorKernelFunction* tensorKernelFactory(const std::string &kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore, const std::string& kernelParameters);
 
 #ifdef CUDA_ENABLED
     /*!
@@ -298,14 +305,17 @@ private:
 
     /*!
      * @brief Matrix gpu kernel factory in which custom gpu kernels are produced.
-     * @param kernelName The custom kernel class a kernel object is going to be instantiated from.
+     * @param kernelClassName The name of the kernel class.
+     * @param kernelName The name of the kernel.
      * @param gridSizes Array of integers indicating the grid sizes with which gpu kernels should be launched.
      * @param blockSizes Array of integers indicating the block sizes with which gpu kernels should be launched.
+     * @param sharedMemorySizes Array of integers indicating the shared memory sizes with which gpu kernels should be launched.
+     * @param kernelParameters The kernel parameters to be given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
      * @return MatrixGPUKernel abstract class from which every custom matrix kernel class in the SparseViz ecosystem is derived.
      */
-    MatrixGPUKernel* matrixGPUKernelFactory(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore);
+    MatrixGPUKernel* matrixGPUKernelFactory(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore);
 
     /*!
      * @brief Runs all GPU tensor kernels.
@@ -315,14 +325,17 @@ private:
 
     /*!
      * @brief Tensor gpu kernel factory in which custom gpu kernels are produced.
-     * @param kernelName The custom kernel class a kernel object is going to be instantiated from.
+     * @param kernelClassName The name of the kernel class.
+     * @param kernelName The name of the kernel.
      * @param gridSizes Array of integers indicating the grid sizes with which gpu kernels should be launched.
      * @param blockSizes Array of integers indicating the block sizes with which gpu kernels should be launched.
+     * @param sharedMemorySizes Array of integers indicating the shared memory sizes with which gpu kernels should be launched.
+     * @param kernelParameters The kernel parameters to be given to the kernel class constructor, typically not splitted and expected to be done so in the kernel class constructor.
      * @param nRun Number of times kernel is desired to be executed.
      * @param nIgnore Number of times the initial executions are desired to be ignored.
      * @return TensorGPUKernel abstract class from which every custom matrix kernel class in the SparseViz ecosystem is derived.
      */
-    TensorGPUKernel* tensorGPUKernelFactory(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore);
+    TensorGPUKernel* tensorGPUKernelFactory(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore);
 #endif
 
 private:

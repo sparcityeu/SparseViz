@@ -4,44 +4,41 @@
 #include "SparseMatrix.h"
 #include "omp.h"
 #include "SparseTensor.h"
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fstream>
 #include <sstream>
 #include "MatrixMarketIOLibrary.h"
+#include "SparseTensorCOO.h"
+#include "sort.h"
+#include "stdlib.h"
+#include "unistd.h"
+#include "sys/mman.h"
+#include "sys/stat.h"
+#include "fcntl.h"
+#include "stdio.h"
 
 
 SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFileName)
 {
-    /*
-     * Reads matrix from the market file and construct a SparseMatrix object
-     */
-
     // Checking whether it has already been read and saved to a binary file previously
     std::string binaryFileName = marketFileName + ".bin";
-    std::string matrixName = split(split(binaryFileName, '.').front(), '/').back();
+    std::vector<std::string> marketFileParsed = split(marketFileName, '.');
+    if (marketFileParsed.size() <= 1) throw std::runtime_error("Your matrix file name should have a file extension of .mtx");
+    std::string matrixName = split(marketFileParsed[marketFileParsed.size() - 2], '/').back();
 
     SparseMatrix* matrix = SparseVizIO::readMatrixFromBinaryFile(binaryFileName, matrixName);
-
     if (matrix != nullptr)
     {
         return matrix;
     }
 
     double start_time = omp_get_wtime();
-
     int row, column;
-    std::vector<Nonzero> nonzeros;
 
     MM_typecode matcode;
     FILE* f = fopen(marketFileName.c_str(), "r");
 
     if (f == nullptr)
     {
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error("Failed to open the file: " + marketFileName);
         }
@@ -50,7 +47,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     if (mm_read_banner(f, &matcode) != 0)
     {
         fclose(f);
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error(marketFileName + ": Could not process the Matrix Market banner.");
         }
@@ -59,66 +56,82 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     if (!(mm_is_valid(matcode) && mm_is_matrix(matcode) && mm_is_sparse(matcode)))
     {
         fclose(f);
-#pragma omp critical
+        #pragma omp critical
         {
             throw std::runtime_error(marketFileName + ": Unsupported type: [" + mm_typecode_to_str(matcode) + ']');
         }
     }
 
-    // Whether the upper diagonal of the matrix is same with the lower diagonal
     bool isSymmetric = mm_is_symmetric(matcode);
 
     int nnz;
+    int loopIter;
     if (mm_read_mtx_crd_size(f, &row, &column, &nnz) != 0)
     {
         fclose(f);
         throw std::runtime_error(marketFileName + ": Could not read coordinate size.");
     }
-
-    // Catching memory allocation failure on heap
-    try
+    loopIter = nnz;
+    if (isSymmetric)
     {
-        nonzeros.reserve(nnz); // reserving memory without initializing Nonzero objects
-    }
-    catch (const std::bad_alloc&)
-    {
-        fclose(f);
-        throw std::runtime_error(marketFileName + ": Memory allocation failed while reserving space for nonzeros.");
+        nnz *= 2;
     }
 
-    // Constructing vector of nonzeros
+    vType* storage = new vType[nnz * 2];
+    valType* values = new valType[nnz];
+
     int r, c;
     double val;
     char line[256];
-    for (int i = 0; i != nnz; ++i)
+
+    for (int i = 0; i < loopIter; ++i)
     {
         fgets(line, sizeof(line), f);
-        int itemsRead = sscanf(line, "%d %d %lg", &r, &c, &val);
+        int itemsRead = sscanf(line, "%d %d %lf", &r, &c, &val);
 
         --r; // converting 1-based indexing to 0-based indexing
         --c;
 
-        nonzeros.emplace_back(r, c, itemsRead == 2 ? 1: val);
+        int nnzStart = i * 2;
+        storage[nnzStart] = r;
+        storage[nnzStart + 1] = c;
 
-        if (isSymmetric && (r != c))
+        if (itemsRead == 2)
         {
-            nonzeros.emplace_back(c, r, itemsRead == 2 ? 1: val);
+            values[i] = 1;
+
+            if (isSymmetric)
+            {
+                storage[(i + loopIter) * 2] = c;
+                storage[(i + loopIter) * 2 + 1] = r;
+                values[i + loopIter] = 1;
+            }
+        }
+        else
+        {
+            values[i] = val;
+
+            if (isSymmetric)
+            {
+                storage[(i + loopIter) * 2] = c;
+                storage[(i + loopIter) * 2 + 1] = r;
+                values[i + loopIter] = val;
+            }
         }
     }
-    fclose(f);
 
-    // Reducing the vector's capacity to make it equal to the size of the vector in case there was more capacity allocated
-    // in the underlying data structure of the vector (array) than what the vector needs to store the matrix
-    nonzeros.shrink_to_fit();
+    fclose(f);
     double end_time = omp_get_wtime();
 
     // Order By row, column ASC
-    SparseVizIO::sortVector(row, column, nonzeros);
-    matrix = new SparseMatrix(matrixName, row, column, nonzeros);
+    vType dims[2]; dims[0] = row; dims[1] = column;
+    sortNonzeros(2, dims, nnz, storage, values);
+    matrix = new SparseMatrix(matrixName, row, column, nnz, storage, values);
+    delete[] storage;
 
-    logger.logReadingMatrixMarket(matrix, end_time - start_time);
+    logger->logReadingMatrixMarket(matrix, end_time - start_time);
 
-    // Writing the vector to a binary file to accelerate the speed at which the matrix will be read next time
+    // Writing the matrix into a binary file to accelerate the speed at which the matrix will be read next time
     SparseVizIO::writeMatrixToBinaryFile(binaryFileName, matrix);
 
     return matrix;
@@ -130,6 +143,7 @@ void SparseVizIO::writeMatrixToBinaryFile(const std::string &binaryFileName, Spa
     if ((fp = fopen(binaryFileName.c_str(), "w")) == nullptr)
     {
         std::cout << binaryFileName << " cannot be created" << endl;
+        return;
     }
 
     double start_time = omp_get_wtime();
@@ -140,25 +154,25 @@ void SparseVizIO::writeMatrixToBinaryFile(const std::string &binaryFileName, Spa
     bool& isPatternSymmetric = matrix->isPatternSymmetric();
     bool& isSymmetric = matrix->isSymmetric();
 
-    fwrite (&rowCount, sizeof(vType), 1, fp);
-    fwrite (&colCount, sizeof(vType), 1, fp);
-    fwrite (&nnzCount, sizeof(vType), 1, fp);
-    fwrite (&isPatternSymmetric, sizeof(bool), 1, fp);
-    fwrite (&isSymmetric, sizeof(bool), 1, fp);
+    fwrite(&rowCount, sizeof(vType), 1, fp);
+    fwrite(&colCount, sizeof(vType), 1, fp);
+    fwrite(&nnzCount, sizeof(vType), 1, fp);
+    fwrite(&isPatternSymmetric, sizeof(bool), 1, fp);
+    fwrite(&isSymmetric, sizeof(bool), 1, fp);
 
     vType* ptr = matrix->getPtr();
-    fwrite (ptr, sizeof(vType), (rowCount + 1), fp);
+    fwrite(ptr, sizeof(vType), (rowCount + 1), fp);
 
     vType* ind = matrix->getInd();
-    fwrite (ind, sizeof(vType), nnzCount, fp);
+    fwrite(ind, sizeof(vType), nnzCount, fp);
 
     valType* val = matrix->getValues();
-    fwrite (val, sizeof(valType), nnzCount, fp);
+    fwrite(val, sizeof(valType), nnzCount, fp);
 
     fclose(fp);
 
     double end_time = omp_get_wtime();
-    logger.logWritingMatrixBinary(matrix, end_time - start_time);
+    logger->logWritingMatrixBinary(matrix, end_time - start_time);
 }
 
 SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFileName, const std::string& name)
@@ -169,7 +183,8 @@ SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFil
      */
 
     FILE *fp = nullptr;
-    if ((fp = fopen(binaryFileName.c_str(), "r")) == nullptr) {
+    if ((fp = fopen(binaryFileName.c_str(), "r")) == nullptr)
+    {
         return nullptr;
     }
 
@@ -178,73 +193,26 @@ SparseMatrix* SparseVizIO::readMatrixFromBinaryFile(const std::string &binaryFil
     vType row, column, nnzCount;
     bool isPatternSymmetric, isSymmetric;
 
-    fread (&row, sizeof(vType), 1, fp);
-    fread (&column, sizeof(vType), 1, fp);
-    fread (&nnzCount, sizeof(vType), 1, fp);
-    fread (&isPatternSymmetric, sizeof(bool), 1, fp);
-    fread (&isSymmetric, sizeof(bool), 1, fp);
+    fread(&row, sizeof(vType), 1, fp);
+    fread(&column, sizeof(vType), 1, fp);
+    fread(&nnzCount, sizeof(vType), 1, fp);
+    fread(&isPatternSymmetric, sizeof(bool), 1, fp);
+    fread(&isSymmetric, sizeof(bool), 1, fp);
 
     SparseMatrix* matrix = new SparseMatrix(name, row, column, nnzCount, isSymmetric, isPatternSymmetric);
 
     vType* ptr = matrix->getPtr();
-    fread (ptr, sizeof(vType), (row + 1), fp);
+    fread(ptr, sizeof(vType), (row + 1), fp);
 
     vType* ind = matrix->getInd();
-    fread (ind, sizeof(vType), nnzCount, fp);
+    fread(ind, sizeof(vType), nnzCount, fp);
 
     valType* val = matrix->getValues();
-    fread (val, sizeof(valType), nnzCount, fp);
+    fread(val, sizeof(valType), nnzCount, fp);
     fclose(fp);
     double end_time = omp_get_wtime();
-    logger.logReadingMatrixBinary(matrix, end_time - start_time);
+    logger->logReadingMatrixBinary(matrix, end_time - start_time);
     return matrix;
-}
-
-void SparseVizIO::sortVector(int row, int column, std::vector<Nonzero> &nonzeros)
-{
-    /*
-     * Bucket sort to the Nonzero objects in the vector
-     * Order By row, column ASC
-     */
-
-    std::vector<std::vector<Nonzero>> buckets(column);
-//#pragma omp parallel for 
-    for (const auto& nonzero: nonzeros)
-    {
-        buckets[nonzero.column].emplace_back(nonzero);
-    }
-
-    std::vector<Nonzero> sortedNonzeros;
-    sortedNonzeros.reserve(nonzeros.size());
-    for (const auto& bucket: buckets)
-    {
-        for (const auto& nonzero: bucket)
-        {
-            sortedNonzeros.emplace_back(nonzero);
-        }
-    }
-
-    nonzeros = std::move(sortedNonzeros);
-    sortedNonzeros.clear();
-
-    buckets.clear();
-    buckets.resize(row);
-//#pragma omp parallel for
-    for (const auto& nonzero: nonzeros)
-    {
-        buckets[nonzero.row].emplace_back(nonzero);
-    }
-
-    sortedNonzeros.reserve(nonzeros.size());
-    for (const auto& bucket: buckets)
-    {
-        for (const auto& nonzero: bucket)
-        {
-            sortedNonzeros.emplace_back(nonzero);
-        }
-    }
-
-    nonzeros = std::move(sortedNonzeros);
 }
 
 SparseMatrix *
@@ -270,8 +238,8 @@ bool SparseVizIO::readMatrixOrderingFromBinaryFile(const std::string& binaryFile
         *rowIPermutation = new vType[nRow];
         *colIPermutation = new vType[nCol];
 
-        fread (*rowIPermutation, sizeof(vType), nRow, fp);
-        fread (*colIPermutation, sizeof(vType), nRow, fp);
+        fread(*rowIPermutation, sizeof(vType), nRow, fp);
+        fread(*colIPermutation, sizeof(vType), nRow, fp);
 
         fclose(fp);
 
@@ -289,16 +257,18 @@ void SparseVizIO::writeMatrixOrderingToBinaryFile(const std::string &binaryFileN
         throw std::runtime_error(binaryFileName + ": Cannot open the output file!");
     }
 
-    fwrite (rowIPermutation, sizeof(vType), nRow, fp);
-    fwrite (colIPermutation, sizeof(vType), nCol, fp);
+    fwrite(rowIPermutation, sizeof(vType), nRow, fp);
+    fwrite(colIPermutation, sizeof(vType), nCol, fp);
 
     fclose(fp);
 }
 
 SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFileName)
 {
-    std::string binaryFileName = split(marketFileName, '.').front() + ".tns.bin";
-    std::string tensorName = split(split(binaryFileName, '.').front(), '/').back();
+    std::string binaryFileName = marketFileName + ".bin";
+    std::vector<std::string> marketFileParsed = split(marketFileName, '.');
+    if (marketFileParsed.size() <= 1) throw std::runtime_error("Your tensor file name should have a file extension of .tns");
+    std::string tensorName = split(marketFileParsed[marketFileParsed.size() - 2], '/').back();
 
     SparseTensor* tensor = SparseVizIO::readTensorFromBinaryFile(binaryFileName, tensorName);
     if (tensor != nullptr)
@@ -308,18 +278,171 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
     double start_time = omp_get_wtime();
 
-    auto pigoTensor = new pigo::Tensor<vType, eType, vType*, valType, valType*, true>(marketFileName, pigo::FileType::EDGE_LIST);
-    tensor = new SparseTensor(tensorName, pigoTensor);
-    for(eType i = 0; i < tensor->getNNZCount(); i++) {
-        for(int o = 0; o < tensor->getOrder(); o++) {
-            tensor->getStorage()[i * tensor->getOrder() + o]--;
-        }
+    int fd = open(marketFileName.c_str(), O_RDONLY);
+    struct stat sb;
+    if (fd == -1)
+    {
+        throw std::runtime_error("File " + marketFileName + " could not be opened.");
     }
+    if (fstat(fd, &sb) == -1)
+    {
+        throw std::runtime_error("Error occured trying to get the information related to " + marketFileName + ".");
+    }
+    char* addr = (char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (addr == MAP_FAILED)
+    {
+        throw std::runtime_error("Mapping of the file: " + marketFileName + " into memory has failed.");
+    }
+
+    char* start = addr;
+    while ((*start) == '\n')
+    {
+        ++start;
+    }
+    char* end = addr + sb.st_size;
+    while ((*(end - 1)) == '\n')
+    {
+        --end;
+    }
+
+    std::string firstLine = getLine(start);
+    std::vector<std::string> firstLineSplitted = split(firstLine, ' ');
+
+    vType order;
+    order = firstLineSplitted.size() - 1;
+    vType* dims = new vType[order];
+    memset(dims, 0, sizeof(vType) * order);
+    eType nnz = 0;
+
+    std::vector<vType> storage;
+    std::vector<valType > values;
+    for (int i = 0; i < order; ++i)
+    {
+        vType coord = std::stoul(firstLineSplitted[i]) - 1;
+        dims[i] = coord + 1;
+        storage.push_back(coord);
+    }
+    values.push_back(std::stod(firstLineSplitted[order]));
+    ++nnz;
+
+    unsigned total = end - start;
+    unsigned threadCount = omp_get_max_threads();
+    unsigned long long chunkSize = std::ceil(static_cast<double>(total) / threadCount);
+
+#pragma omp parallel num_threads(threadCount) default(none) shared(threadCount, order, dims, nnz, storage, values, start, end, chunkSize)
+    {
+        unsigned myID = omp_get_thread_num();
+        char* myAddrStart;
+        char* myAddrEnd;
+
+        // start positioning
+        if (myID == 0)
+        {
+            myAddrStart = start;
+        }
+        else
+        {
+            myAddrStart = start + myID * chunkSize;
+            while (myAddrStart < end && *(myAddrStart - 1) != '\n')
+            {
+                ++myAddrStart;
+            }
+        }
+
+        // end positioning
+        if (myID == threadCount - 1)
+        {
+            myAddrEnd = end;
+        }
+        else
+        {
+            myAddrEnd = start + (myID + 1) * chunkSize;
+            while (myAddrEnd < end && *myAddrEnd != '\n')
+            {
+                ++myAddrEnd;
+            }
+        }
+
+        // ensuring that the subsequent threads do not capture the same 2 lines into their chunk
+        if (myID < threadCount - 1)
+        {
+            char* nextThreadStart = start + (myID + 1) * chunkSize;
+            while (nextThreadStart < end && *(nextThreadStart - 1) != '\n')
+            {
+                ++nextThreadStart;
+            }
+            if (myAddrEnd > nextThreadStart)
+            {
+                myAddrEnd = nextThreadStart - 1;
+            }
+        }
+
+        // thread private tensor
+        vType* t_dims = new vType[order];
+        memset(t_dims, 0, sizeof(vType) * order);
+        eType t_nnz = 0;
+
+        std::vector<vType> t_storage;
+        std::vector<valType > t_values;
+        //
+
+        std::string line;
+        std::vector<std::string> lineSplitted;
+        while (myAddrStart < myAddrEnd)
+        {
+            line = getLine(myAddrStart);
+            lineSplitted = split(line, ' ');
+            if (lineSplitted.size() != (order + 1)) continue;
+            for (int i = 0; i < order; ++i)
+            {
+                vType coord = std::stoul(lineSplitted[i]) - 1;
+                if ((coord + 1) > t_dims[i])
+                {
+                    t_dims[i] = coord + 1;
+                }
+                t_storage.push_back(coord);
+            }
+            t_values.push_back(std::stod(lineSplitted[order]));
+            ++t_nnz;
+        }
+
+        #pragma omp critical
+        {
+            nnz += t_nnz;
+            for (int i = 0; i < order; ++i)
+            {
+                if (t_dims[i] > dims[i])
+                {
+                    dims[i] = t_dims[i];
+                }
+            }
+
+            for (int i = 0; i < t_nnz * order; ++i)
+            {
+                storage.push_back(t_storage[i]);
+            }
+
+            for (int i = 0; i < t_nnz; ++i)
+            {
+                values.push_back(t_values[i]);
+            }
+        };
+
+        delete[] t_dims;
+    };
+
+    close(fd);
+    munmap(addr, sb.st_size);
+
+    vType* storageArr = new vType[nnz * order];
+    memcpy(storageArr, storage.data(), sizeof(vType) * nnz * order);
+    valType* valuesArr = new valType[nnz];
+    memcpy(valuesArr, values.data(), sizeof(valType) * nnz);
+    tensor = new SparseTensorCOO(tensorName, order, dims, nnz, valuesArr, storageArr);
+
     double end_time = omp_get_wtime();
 
-    //SparseVizIO::removeDuplicates(nonzeros, tensorName, xCount, yCount, zCount);
-
-    logger.logReadingTensorMarket(tensor, end_time - start_time);
+    logger->logReadingTensorMarket(tensor, end_time - start_time);
 
     SparseVizIO::writeTensorToBinaryFile(binaryFileName, tensor);
 
@@ -328,41 +451,61 @@ SparseTensor* SparseVizIO::readTensorFromMarketFile(const std::string &marketFil
 
 void SparseVizIO::writeTensorToBinaryFile(const std::string &binaryFileName, SparseTensor *tensor)
 {
-    double start_time = omp_get_wtime();
-
-    try
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "w")) == nullptr)
     {
-        tensor->save(binaryFileName);
-    }
-    catch (const pigo::Error&)
-    {
-        std::cout << binaryFileName << " cannot be created" << std::endl;
+        std::cout << binaryFileName << " cannot be created" << endl;
         return;
     }
 
+    double start_time = omp_get_wtime();
+
+    vType order = tensor->getOrder();
+    vType* dims = tensor->getDims();
+    eType nnz = tensor->getNNZ();
+    valType* values = tensor->getValues();
+    vType* storage = dynamic_cast<SparseTensorCOO*>(tensor)->getStorage();
+
+    fwrite(&order, sizeof(vType), 1, fp);
+    fwrite(dims, sizeof(vType), order, fp);
+    fwrite(&nnz, sizeof(eType), 1, fp);
+    fwrite(values, sizeof(valType), nnz, fp);
+    fwrite(storage, sizeof(vType), nnz * order, fp);
+
+    fclose(fp);
+
     double end_time = omp_get_wtime();
-    logger.logWritingTensorBinary(tensor, end_time - start_time);
+
+    logger->logWritingTensorBinary(tensor, end_time - start_time);
 }
 
 SparseTensor *SparseVizIO::readTensorFromBinaryFile(const std::string &binaryFileName, const std::string& name)
 {
-    try
-    {
-        double start_time = omp_get_wtime();
-
-        auto pigoTensor = new pigo::Tensor<vType, eType, vType*, valType, valType*, true>(binaryFileName, pigo::FileType::PIGO_TENSOR_BIN);
-        SparseTensor* tensor = new SparseTensor(name, pigoTensor);
-
-        double end_time = omp_get_wtime();
-
-        logger.logReadingTensorBinary(tensor, end_time - start_time);
-
-        return tensor;
-    }
-    catch (const pigo::Error& e)
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) == nullptr)
     {
         return nullptr;
     }
+
+    double start_time = omp_get_wtime();
+
+    vType order;
+    vType* dims;
+    eType nnz;
+
+    fread(&order, sizeof(vType), 1, fp);
+    dims = new vType[order];
+    fread(dims, sizeof(vType), order, fp);
+    fread(&nnz, sizeof(eType), 1, fp);
+    SparseTensor* tensor = new SparseTensorCOO(name, order, dims, nnz);
+    fread(tensor->getValues(), sizeof(valType), nnz, fp);
+    fread(dynamic_cast<SparseTensorCOO*>(tensor)->getStorage(), sizeof(vType), nnz * order, fp);
+
+    double end_time = omp_get_wtime();
+
+    logger->logReadingTensorBinary(tensor, end_time - start_time);
+
+    return tensor;
 }
 
 SparseTensor* SparseVizIO::readOrderedTensorFromBinaryFile(const std::string &orderingName, const std::string &tensorName)
@@ -381,43 +524,30 @@ void SparseVizIO::writeOrderedTensorToBinaryFile(SparseTensor *tensor)
 
 bool SparseVizIO::readTensorOrderingFromBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType**& orderedDimensions)
 {
-    try
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
     {
-        pigo::File binaryFile(binaryFileName, pigo::OpenMode::READ);
         orderedDimensions = new vType*[norder];
-        for (vType i = 0; i != norder; ++i)
-        {   
+        for (vType i = 0; i < norder; ++i)
+        {
             orderedDimensions[i] = new vType[dims[i]];
-            size_t sizeToRead = sizeof(vType) * dims[i];
-            binaryFile.parallel_read(reinterpret_cast<char*>(orderedDimensions[i]), sizeToRead);
+            fread(orderedDimensions[i], sizeof(vType), dims[i], fp);
         }
+        fclose(fp);
         return true;
     }
-    catch (const pigo::Error& e)
-    {
-        return false;
-    }
+    return false;
 }
 
 void SparseVizIO::writeTensorOrderingToBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType** orderedDimensions)
 {
-    try
+    FILE *fp = nullptr;
+    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
     {
-        size_t totalSize = 0;
-        for (vType i = 0; i != norder; ++i)
+        for (vType i = 0; i < norder; ++i)
         {
-            size_t sizeToWrite = sizeof(vType) * dims[i];
-            totalSize += sizeToWrite;
+            fwrite(orderedDimensions[i], sizeof(vType), dims[i], fp);
         }
-        pigo::File binaryFile(binaryFileName, pigo::OpenMode::WRITE, totalSize);
-        for (vType i = 0; i != norder; ++i)
-        {
-            size_t sizeToWrite = sizeof(vType) * dims[i];
-            binaryFile.parallel_write(reinterpret_cast<char*>(orderedDimensions[i]), sizeToWrite);
-        }
-    }
-    catch (const pigo::Error& e)
-    {
-        std::cout << "Skipping writing tensor ordering to a binary file: " << e.what() << std::endl;
+        fclose(fp);
     }
 }

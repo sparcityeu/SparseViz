@@ -7,6 +7,7 @@
 #include "Parameters.h"
 #include "helpers.h"
 #include <cstdlib>
+#include "sort.h"
 
 
 TrivialOrdering::TrivialOrdering(SparseMatrix &matrix, std::string orderingName, std::string orderingParameters)
@@ -53,9 +54,9 @@ void TrivialOrdering::orderingFunction()
     unsigned n = this->getMatrix().getRowCount();
     unsigned m = this->getMatrix().getColCount();
 
-    unsigned* ptrs = this->getMatrix().getPtr();
-    unsigned* ids = this->getMatrix().getInd();
-    double* vals = this->getMatrix().getValues();
+    vType* ptrs = this->getMatrix().getPtr();
+    vType* ids = this->getMatrix().getInd();
+    valType* vals = this->getMatrix().getValues();
 
     if (rowIPermutation || colIPermutation) return;
 

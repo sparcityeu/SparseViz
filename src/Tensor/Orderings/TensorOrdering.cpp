@@ -8,6 +8,7 @@
 #include <string.h>
 #include "SparseVizIO.h"
 
+
 TensorOrdering::TensorOrdering(SparseTensor &tensor,  const std::vector<vType>& active_modes, std::string orderingName, unsigned int orderingFunctionPrice)
 :   tensor(tensor),
     orderedDimensions(nullptr),
@@ -64,12 +65,23 @@ void TensorOrdering::generateOrdering(bool writeOrdering)
 {
     if (!USE_EXISTING_ORDERINGS || !this->readOrdering())
     {
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            std::vector<CPUBenchmarkSettings> settings = getSettings();
+            sparseVizPerformance->activatePerf(settings.data(), settings.size());
+        }
+
         double start_time = omp_get_wtime();
         this->orderingFunction();
         this->checkPermutationCorrectness();
         double end_time = omp_get_wtime();
 
-        logger.logTensorOrdering(this, end_time - start_time);
+        SparseVizPerformance::OperationResults results;
+        if (ORDERING_PERFORMANCE_LOG)
+        {
+            results = sparseVizPerformance->deactivatePerf();
+        }
+        logger->logTensorOrdering(this, end_time - start_time, results);
 
         if(writeOrdering && EXPORT_ORDERINGS)
         {
@@ -115,7 +127,7 @@ bool TensorOrdering::readOrdering()
     double end_time = omp_get_wtime();
     if (ret)
     {
-        logger.logReadingTensorOrdering(this, end_time - start_time);
+        logger->logReadingTensorOrdering(this, end_time - start_time);
     }
 
     return ret;
@@ -133,7 +145,7 @@ void TensorOrdering::writeOrdering()
     SparseVizIO::writeTensorOrderingToBinaryFile(binaryFileName, tensor.getOrder(), this->getTensor().getDims(), orderedDimensions);
     double end_time = omp_get_wtime();
 
-    logger.logWritingTensorOrdering(this, end_time - start_time);
+    logger->logWritingTensorOrdering(this, end_time - start_time);
 }
 
 void TensorOrdering::calculateOrderingPrice(unsigned int orderingFunctionPrice)
@@ -142,7 +154,7 @@ void TensorOrdering::calculateOrderingPrice(unsigned int orderingFunctionPrice)
     const double dimensionBaseFactor = 0.001;
     const vType* dims = this->getTensor().getDims();
 
-    double nnzPrice = log(this->getTensor().getNNZCount() + 1) * nnzBaseFactor;
+    double nnzPrice = log(this->getTensor().getNNZ() + 1) * nnzBaseFactor;
     double dimensionPrice = 0;
     for (int i = 0; i != tensor.getOrder(); ++i)
     {

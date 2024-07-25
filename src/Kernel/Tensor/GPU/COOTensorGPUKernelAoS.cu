@@ -1,13 +1,31 @@
 #include "COOTensorGPUKernelAoS.h"
-#include "GPUKernels.cuh"
-#include "cuda_runtime.h"
+#include "SparseTensorCOO.h"
+#include "helpers.h"
+
+
+__global__ void cooTensorAoS(const vType* storage, eType nnzcount, int order, const float* input_vals, float* output) {
+    int no_threads = blockDim.x * gridDim.x;
+    eType tid = threadIdx.x + blockDim.x * blockIdx.x;
+    float sum = 0;
+    for(eType i = tid; i < nnzcount; i += no_threads) {
+        float temp = 1;
+        for(int m = 0; m < order; m++) {
+            temp *= input_vals[storage[i * order + m]];
+        }
+        sum += temp;
+    }
+    atomicAdd(output, sum);
+}
+
 
 bool COOTensorGPUKernelAoS::init(const SparseTensor &A)
 {
+    const SparseTensorCOO& tensorCOO = dynamic_cast<const SparseTensorCOO&>(A);
+
     h_output = 0.0f;
-    h_nonzeros = A.getStorage();
+    h_nonzeros = tensorCOO.getStorage();
     dims = A.getDims();
-    nnzcount = A.getNNZCount();
+    nnzcount = tensorCOO.getNNZ();
     order = A.getOrder();
 
     vType* dim_offsets = new vType[order + 1];
@@ -51,10 +69,10 @@ COOTensorGPUKernelAoS::~COOTensorGPUKernelAoS()
 
 }
 
-void COOTensorGPUKernelAoS::hostFunction(const SparseTensor &A, int iterNumber, int gridSize, int blockSize)
+void COOTensorGPUKernelAoS::hostFunction(const SparseTensor &A, int iterNumber, int gridSize, int blockSize, int sharedMemorySize)
 {
     for(int i = 0; i < 10; i++) {
-        cooTensorAoS<<<gridSize, blockSize>>>(d_nonzeros, nnzcount, order, d_arrays, d_output);
+        cooTensorAoS<<<gridSize, blockSize, sharedMemorySize>>>(d_nonzeros, nnzcount, order, d_arrays, d_output);
     }
     cudaDeviceSynchronize();
 }

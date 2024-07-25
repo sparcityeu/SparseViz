@@ -8,12 +8,10 @@
 #include <chrono> // for seeding the random number generator
 #include <cassert>
 #include "json.hpp"
-#include "SparseTensor.h"
 #include "KernelResult.h"
 #include "TensorOrdering.h"
 #include "helpers.h"
 #include "config.h"
-#include "Nonzero3D.h"
 
 struct TStatistic
 {

@@ -7,16 +7,17 @@
 
 #include "TensorGPUKernel.h"
 
+
 class COOTensorGPUKernelAoS: public TensorGPUKernel
 {
 public:
-    COOTensorGPUKernelAoS(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, int nRun, int nIgnore)
-    : TensorGPUKernel(kernelName, gridSizes, blockSizes, nRun, nIgnore) {}
+    COOTensorGPUKernelAoS(const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, int nRun, int nIgnore)
+    :   TensorGPUKernel(kernelName, gridSizes, blockSizes, sharedMemorySizes, nRun, nIgnore) {}
 
     virtual ~COOTensorGPUKernelAoS() override;
     virtual bool init(const SparseTensor& A) override;
     virtual void preprocess(const SparseTensor& A) override {}
-    virtual void hostFunction(const SparseTensor& A, int iterNumber, int gridSize, int blockSize) override;
+    virtual void hostFunction(const SparseTensor& A, int iterNumber, int gridSize, int blockSize, int sharedMemorySize) override;
 
 private:
     float* h_arrays;
@@ -29,5 +30,6 @@ private:
     eType nnzcount;
     int order;
 };
+
 
 #endif //SPARSEVIZ_COOGPUTENSORKERNELAOS_H

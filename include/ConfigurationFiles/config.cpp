@@ -3,7 +3,8 @@
 #include "SparseVizEngine.h"
 
 
-SparseVizLogger logger;
+SparseVizLogger* logger = new SparseVizLogger;
+SparseVizPerformance* sparseVizPerformance = new SparseVizPerformance;
 bool TIMING_LOG = true;
 std::string PROJECT_DIR = "-1";
 double MAX_TIME_BEFORE_ABORTING_ORDERING = 1000;
@@ -24,6 +25,10 @@ std::string CHART_TYPE = "-1";
 unsigned int MAX_DIM = 64;
 std::string TEST_DIRECTORY = "/home/users/kaya/SparseViz/TestFiles/";
 std::string TEST_CONFIG = TEST_DIRECTORY + "template_test_file";
+TensorType TENSOR_STORAGE_TYPE;
+BlockType BLOCK_SIZE;
+bool ORDERING_PERFORMANCE_LOG = false;
+bool KERNEL_PERFORMANCE_LOG = false;
 
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
@@ -41,9 +46,11 @@ ConfigFileReader::~ConfigFileReader()
 {
     m_File.close();
 #ifndef TEST
-    logger.createCSVFile(PROJECT_DIR + m_LogFilePath);
+    logger->createCSVFile(PROJECT_DIR + m_LogFilePath);
 #endif
     delete m_Engine;
+    delete sparseVizPerformance;
+    delete logger;
 }
 
 void ConfigFileReader::readConfigFile()
@@ -177,7 +184,6 @@ void ConfigFileReader::readConfigFile()
 
 SparseVizEngine *ConfigFileReader::instantiateEngine()
 {
-
     this->readConfigFile();
     m_Engine = new SparseVizEngine();
 
@@ -311,7 +317,7 @@ void ConfigFileReader::readSetting(const std::string& line)
     }
     else if (lineSplitted[0] == "LOGO_PATH")
     {
-        LOGO_PATH = lineSplitted[1];
+        LOGO_PATH = PROJECT_DIR + lineSplitted[1];
     }
     else if (lineSplitted[0] == "FAVICON_PATH")
     {
@@ -331,6 +337,44 @@ void ConfigFileReader::readSetting(const std::string& line)
         {
             throw std::runtime_error("Invalid format for MAX_DIM");
         }
+    }
+    else if (lineSplitted[0] == "TENSOR_STORAGE_TYPE")
+    {
+        if (lineSplitted[1] == "COO")
+        {
+            TENSOR_STORAGE_TYPE = COO;
+        }
+        else if (lineSplitted[1] == "CSF")
+        {
+            TENSOR_STORAGE_TYPE = CSF;
+        }
+        else if (lineSplitted[1] == "HiCOO")
+        {
+            TENSOR_STORAGE_TYPE = HiCOO;
+        }
+        else
+        {
+            throw std::runtime_error("TENSOR_STORAGE_TYPE must be one of the following types: COO, CSF, HiCOO");
+        }
+    }
+    else if (lineSplitted[0] == "BLOCK_SIZE")
+    {
+        try
+        {
+            BLOCK_SIZE = std::stoi(lineSplitted[1]);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for BLOCK_SIZE");
+        }
+    }
+    else if (lineSplitted[0] == "ORDERING_PERFORMANCE_LOG")
+    {
+        ORDERING_PERFORMANCE_LOG = (lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
+    }
+    else if (lineSplitted[0] == "KERNEL_PERFORMANCE_LOG")
+    {
+        KERNEL_PERFORMANCE_LOG = (lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
     }
 }
 
@@ -503,6 +547,7 @@ void ConfigFileReader::readMatrixKernel(const std::string &line)
 void ConfigFileReader::readTensorKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
+    std::string kernelParameters = "";
 
     int chunkSize, nRun, nIgnore;
     try
@@ -547,7 +592,12 @@ void ConfigFileReader::readTensorKernel(const std::string &line)
         }
     }
 
-    m_Engine->addTensorKernel(lineSplitted[0], threadCounts, lineSplitted[2], chunkSize, nRun, nIgnore);
+    if (lineSplitted.size() >= 7)
+    {
+        kernelParameters = lineSplitted[6];
+    }
+
+    m_Engine->addTensorKernel(lineSplitted[0], threadCounts, lineSplitted[2], chunkSize, nRun, nIgnore, kernelParameters);
 }
 
 #ifdef CUDA_ENABLED
@@ -555,17 +605,20 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
 
-    std::string kernelName = lineSplitted[0];
-    std::vector<std::string> gridSizesString = split(lineSplitted[1], '/');
-    std::vector<std::string> blockSizesString = split(lineSplitted[2], '/');
+    std::string kernelClassName = lineSplitted[0];
+    std::string kernelName = lineSplitted[1];
+    std::vector<std::string> gridSizesString = split(lineSplitted[2], '/');
+    std::vector<std::string> blockSizesString = split(lineSplitted[3], '/');
+    std::vector<std::string> sharedMemorySizesString = split(lineSplitted[4], '/');
 
-    if (gridSizesString.size() != blockSizesString.size())
+    if (gridSizesString.size() != blockSizesString.size() && blockSizesString.size() != sharedMemorySizesString.size())
     {
-        throw std::runtime_error("Length of the gridSize and blockSize does not match for " + kernelName);
+        throw std::runtime_error("Length of the gridSizes, blockSizes, and sharedMemorySizes does not match for " + kernelName);
     }
 
     std::vector<int> gridSizes(gridSizesString.size());
     std::vector<int> blockSizes(gridSizesString.size());
+    std::vector<int> sharedMemorySizes(gridSizesString.size());
     for (int i = 0; i != gridSizesString.size(); ++i)
     {
         try
@@ -587,12 +640,24 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
         {
             throw std::runtime_error("Invalid format for the blockSizes of " + kernelName);
         }
+
+        try
+        {
+            int sharedMemorySize = std::stoi(sharedMemorySizesString[i]);
+            sharedMemorySizes[i] = sharedMemorySize;
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for the sharedMemorySizes of " + kernelName);
+        }
     }
+
+    std::string kernelClassParameters = lineSplitted[5];
 
     int nRun, nIgnore;
     try
     {
-        nRun = std::stoi(lineSplitted[3]);
+        nRun = std::stoi(lineSplitted[6]);
     }
     catch (const std::invalid_argument &e)
     {
@@ -601,14 +666,14 @@ void ConfigFileReader::readGPUMatrixKernel(const std::string &line)
 
     try
     {
-        nIgnore = std::stoi(lineSplitted[4]);
+        nIgnore = std::stoi(lineSplitted[7]);
     }
     catch (const std::invalid_argument &e)
     {
         throw std::runtime_error("Invalid format for the nIgnore of " + kernelName);
     }
 
-    m_Engine->addGPUMatrixKernel(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    m_Engine->addGPUMatrixKernel(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelClassParameters, nRun, nIgnore);
 }
 #endif
 
@@ -617,17 +682,20 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
 {
     std::vector<std::string> lineSplitted = split(line, '|');
 
-    std::string kernelName = lineSplitted[0];
-    std::vector<std::string> gridSizesString = split(lineSplitted[1], '/');
-    std::vector<std::string> blockSizesString = split(lineSplitted[2], '/');
+    std::string kernelClassName = lineSplitted[0];
+    std::string kernelName = lineSplitted[1];
+    std::vector<std::string> gridSizesString = split(lineSplitted[2], '/');
+    std::vector<std::string> blockSizesString = split(lineSplitted[3], '/');
+    std::vector<std::string> sharedMemorySizesString = split(lineSplitted[4], '/');
 
-    if (gridSizesString.size() != blockSizesString.size())
+    if (gridSizesString.size() != blockSizesString.size() && blockSizesString.size() != sharedMemorySizesString.size())
     {
-        throw std::runtime_error("Length of the gridSize and blockSize does not match for " + kernelName);
+        throw std::runtime_error("Length of the gridSizes, blockSizes, and sharedMemorySizes does not match for " + kernelName);
     }
 
     std::vector<int> gridSizes(gridSizesString.size());
     std::vector<int> blockSizes(gridSizesString.size());
+    std::vector<int> sharedMemorySizes(gridSizesString.size());
     for (int i = 0; i != gridSizesString.size(); ++i)
     {
         try
@@ -649,12 +717,24 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
         {
             throw std::runtime_error("Invalid format for the blockSizes of " + kernelName);
         }
+
+        try
+        {
+            int sharedMemorySize = std::stoi(sharedMemorySizesString[i]);
+            sharedMemorySizes[i] = sharedMemorySize;
+        }
+        catch (const std::invalid_argument &e)
+        {
+            throw std::runtime_error("Invalid format for the sharedMemorySizes of " + kernelName);
+        }
     }
+
+    std::string kernelClassParameters = lineSplitted[5];
 
     int nRun, nIgnore;
     try
     {
-        nRun = std::stoi(lineSplitted[3]);
+        nRun = std::stoi(lineSplitted[6]);
     }
     catch (const std::invalid_argument &e)
     {
@@ -663,14 +743,14 @@ void ConfigFileReader::readGPUTensorKernel(const std::string &line)
 
     try
     {
-        nIgnore = std::stoi(lineSplitted[4]);
+        nIgnore = std::stoi(lineSplitted[7]);
     }
     catch (const std::invalid_argument &e)
     {
         throw std::runtime_error("Invalid format for the nIgnore of " + kernelName);
     }
 
-    m_Engine->addGPUTensorKernel(kernelName, gridSizes, blockSizes, nRun, nIgnore);
+    m_Engine->addGPUTensorKernel(kernelClassName, kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelClassParameters, nRun, nIgnore);
 }
 #endif
 

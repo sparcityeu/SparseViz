@@ -16,17 +16,14 @@
 #include <omp.h>
 
 
-void countSort(std::vector< std::pair<unsigned, unsigned> >& inputArray, unsigned* permutation);
 vType calculateBin(vType coordinate, vType dimSize, vType numBins);
 std::string escapeSingleQuote(const std::string &input);
-void convertCOOtoCSR_CSC(int *coords, float *values, int nnz, int dimX, int dimY,
-                         int *rowPtr, int *colInd, float *sortedValues,
-                         int *colPtr, int *rowInd);
 std::string calculateColorscale(bool is_exponential, bool is_red);
 void trim(std::string &s);
 std::vector<std::string> split(const std::string &s, char delimiter);
 std::string merge(const std::vector<std::string>& splittedVersion);
 std::string lowerString(const std::string& s);
+std::string getLine(char*& addr);
 
 struct entry {
 	int row;
@@ -44,5 +41,6 @@ struct pair_hash
         return (pair.first >= pair.second) ? (pair.first * pair.first + pair.first + pair.second) : (pair.second * pair.second + pair.first);
     }
 };
+
 
 #endif //SPARSEVIZ_HELPERS_H

@@ -82,13 +82,13 @@ public:
     void pushGPUKernelResult(const GPUKernelResult& kernelResult);
 
     // GETTERS
-    std::string getOrderingName() const {return orderingName;}
-    double getOrderingPrice() const {return orderingPrice;}
-    vType** getOrderedDimensions() const;
-    SparseTensor& getTensor();
-    const std::vector<KernelResult>& getKernelResults() const {return kernelResults;}
-    const std::vector<GPUKernelResult>& getGPUKernelResults() const {return gpuKernelResults;}
-    const std::vector<vType>& getActiveModes() const {return active_modes;}
+    [[maybe_unused]] [[nodiscard]] std::string getOrderingName() const {return orderingName;}
+    [[maybe_unused]] [[nodiscard]] double getOrderingPrice() const {return orderingPrice;}
+    [[maybe_unused]] [[nodiscard]] vType** getOrderedDimensions() const;
+    [[maybe_unused]] [[nodiscard]] SparseTensor& getTensor();
+    [[maybe_unused]] [[nodiscard]] const std::vector<KernelResult>& getKernelResults() const {return kernelResults;}
+    [[maybe_unused]] [[nodiscard]] const std::vector<GPUKernelResult>& getGPUKernelResults() const {return gpuKernelResults;}
+    [[maybe_unused]] [[nodiscard]] const std::vector<vType>& getActiveModes() const {return active_modes;}
 
 protected:
     /*!

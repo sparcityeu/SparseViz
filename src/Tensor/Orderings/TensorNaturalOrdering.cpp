@@ -3,25 +3,29 @@
 //
 
 #include "TensorNaturalOrdering.h"
-#include <cstring>
+
 
 void TensorNaturalOrdering::orderingFunction()
 {
-    if (orderedDimensions) {
+    if (orderedDimensions)
+    {
         return;
     }
     
-    int tensor_order = tensor.getOrder();
+    vType order = tensor.getOrder();
     const vType* dims = tensor.getDims();
 
-    orderedDimensions = new vType*[tensor_order];
+    orderedDimensions = new vType*[order];
 
-    for (int i = 0; i != tensor_order; ++i) {
+    for (vType i = 0; i != order; ++i)
+    {
         orderedDimensions[i] = new vType[dims[i]];
     } 
     
-    for(const vType& m : active_modes) { 
-        for (vType j = 0; j != dims[m]; ++j) {
+    for(const vType& m : active_modes)
+    {
+        for (vType j = 0; j != dims[m]; ++j)
+        {
             orderedDimensions[m][j] = j;
         }
     }

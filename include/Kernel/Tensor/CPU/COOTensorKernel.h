@@ -3,11 +3,13 @@
 
 #include "TensorKernelFunction.h"
 
+
 class COOTensorKernel: public TensorKernelFunction
 {
 public:
     COOTensorKernel(const std::string& kernelName, const std::vector<int>& threadCounts, const std::string& schedulingPolicy, int chunkSize, int nRun, int nIgnore)
-                        : TensorKernelFunction(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore) {}
+    :   TensorKernelFunction(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore) {}
+
     virtual ~COOTensorKernel() override;
     virtual bool init(const SparseTensor& A) override;
     virtual void preprocess(const SparseTensor& A) {};

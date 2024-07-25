@@ -11,6 +11,7 @@
 #include "TensorVisualizer.h"
 #include "SparseVizLogger.h"
 #include "SparseVizTest.h"
+#include "SparseTensorCOO.h"
 
 using namespace std;
 
@@ -220,7 +221,7 @@ std::string stat_to_html_table(const TensorOrdering &o, const TStatistic &stat)
 void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     double start_time = omp_get_wtime();
 
-    const SparseTensor &tensor = orderings[0]->getTensor();
+    const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(orderings[0]->getTensor());
     const std::vector<vType>& active_modes = orderings[0]->getActiveModes();
 
     std::string filename = tensor.getName();
@@ -231,10 +232,10 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     const int tensor_order = tensor.getOrder();
     const vType* full_dims = tensor.getDims();
     const vType* nonzeros = tensor.getStorage();
-    const valType* values = tensor.getWeights();
-    const vType nnzCount = tensor.getNNZCount();
+    const valType* values = tensor.getValues();
+    const vType nnzCount = tensor.getNNZ();
 
-    logger.makeSilentLog( "visualizeTensorOrderings is started for " + filename);
+    logger->makeSilentLog( "visualizeTensorOrderings is started for " + filename);
 
     const vType dims[3] = {full_dims[active_modes[0]], full_dims[active_modes[1]], full_dims[active_modes[2]]};
 
@@ -311,9 +312,10 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
             ordered_nnz[1] = order[active_modes[1]][y];
             ordered_nnz[2] = order[active_modes[2]][z];
             if(ordered_nnz[0] >= dims[0] || ordered_nnz[1] >= dims[1] || ordered_nnz[2] >= dims[2]) {
-                std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[0] << " | "  
-                                                                                        << ordered_nnz[1] << " " << dims[1] << " | "  
+                std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[0] << " | "
+                                                                                        << ordered_nnz[1] << " " << dims[1] << " | "
                                                                                         << ordered_nnz[2] << " " << dims[2] << std::endl;
+                throw std::runtime_error("a");
                 return;
             }
             for(int d = 0; d < 3; d++) {
@@ -372,13 +374,13 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
 
     double end_time = omp_get_wtime();
 
-    logger.makeSilentLog(orderings[0]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+    logger->makeSilentLog(orderings[0]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
     for (int i = 0; i != norder; ++i)
     {
         stats[i].tensorName = orderings[i]->getTensor().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     //std::cout << "Fiber Counts " <<  fiberCounts[0] << " " <<  fiberCounts[1] << " " <<  fiberCounts[2] << std::endl;
@@ -1094,18 +1096,19 @@ html_file << R"(
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)
@@ -1127,7 +1130,7 @@ html_file << R"(
 void visualizeTensors(TensorOrdering** orderings, int norder) {
     double start_time = omp_get_wtime();
 
-    logger.makeSilentLog( "visualizeTensors is started for " + orderings[0]->getOrderingName());
+    logger->makeSilentLog( "visualizeTensors is started for " + orderings[0]->getOrderingName());
 
     TensorBin ****tensorLists = new TensorBin ***[norder];
     TStatistic stats[norder];
@@ -1139,15 +1142,15 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 {    
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
-    { 
-        const SparseTensor &tensor = orderings[n]->getTensor();
+    {
+        const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(orderings[n]->getTensor());
         const std::vector<vType>& active_modes = orderings[n]->getActiveModes();
 
         const int tensor_order = tensor.getOrder();
         const vType* full_dims = tensor.getDims();
         const vType* nonzeros = tensor.getStorage();
-        const valType* values = tensor.getWeights();
-        const vType nnzCount = tensor.getNNZCount();
+        const valType* values = tensor.getValues();
+        const vType nnzCount = tensor.getNNZ();
 
         for(int i = 0; i < 3; i++) {
             dims[n][i] = full_dims[active_modes[i]];
@@ -1221,6 +1224,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
                 std::cerr << orderings[n]->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[n][0] << " | "  
                                                                                         << ordered_nnz[1] << " " << dims[n][1] << " | "  
                                                                                         << ordered_nnz[2] << " " << dims[n][2] << std::endl;
+                throw std::runtime_error("b");
             }
             for(int d = 0; d < 3; d++) {
                 binIDs[d] = calculateBin(ordered_nnz[d], dims[n][d], vis_dims[n][d]);
@@ -1244,7 +1248,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
             }
         }
         double end_time = omp_get_wtime();
-        //logger.makeSilentLog(orderings[n]->getOrderingName() + ": " + orderings[n]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+        //logger->makeSilentLog(orderings[n]->getOrderingName() + ": " + orderings[n]->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
         for(int d = 0; d < 3; d++) {
             for(vType v = 0; v < fiberMins[d].size(); v++) {
@@ -1271,7 +1275,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 
         stats[n].tensorName = orderings[n]->getTensor().getName();
         stats[n].orderingName = orderings[n]->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
     }
 }
 
@@ -1423,7 +1427,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
         }
         stats[n].geo_mean_nnz = stats[n].geo_mean_nnz / (stats[n].no_bins - stats[n].no_empty_bins);
         stats[n].geo_mean_nnz = exp(stats[n].geo_mean_nnz);
-        stats[n].mean_nnz = (double(orderings[n]->getTensor().getNNZCount())) / (stats[n].no_bins - stats[n].no_empty_bins);
+        stats[n].mean_nnz = (double(orderings[n]->getTensor().getNNZ())) / (stats[n].no_bins - stats[n].no_empty_bins);
        
         vector<vector<int>> *sums[3] = {&topDownSum, &sideSum, &tubeSum};
         vector<vector<int>> *totalValuesArrays[] = {&topDownTotalValues, &sideTotalValues, &tubeTotalValues};
@@ -1439,7 +1443,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
         html_file << "<div style='writing-mode: vertical-rl; display:flex; justify-content:center; text-align: center; align-items:center; transform: "
                      "rotate(180deg); margin-left:20px; margin-right: 10px;'>\n";
         html_file << "<h2>Tensor: " << orderings[n]->getTensor().getName() << " - mods(" << std::to_string(orderings[n]->getActiveModes()[0]) << ", " << std::to_string(orderings[n]->getActiveModes()[1]) << ", " << std::to_string(orderings[n]->getActiveModes()[2]) << ")"  
-         << "<br>\n(dims: " << std::to_string(dims[n][0]) << " x  " << std::to_string(dims[n][1]) << " x  " << std::to_string(dims[n][2]) << ")" << "<br>\n(nnz: " << std::to_string(orderings[n]->getTensor().getNNZCount()) << ")</h3>\n";
+         << "<br>\n(dims: " << std::to_string(dims[n][0]) << " x  " << std::to_string(dims[n][1]) << " x  " << std::to_string(dims[n][2]) << ")" << "<br>\n(nnz: " << std::to_string(orderings[n]->getTensor().getNNZ()) << ")</h3>\n";
         html_file << "</div>\n";
         html_file << "<div style='display: flex; flex-direction: row; justify-content: space-between; align-items: center; width: 100%;'>\n";
 
@@ -1971,18 +1975,19 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)
@@ -2003,7 +2008,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 void visualizeFullSparseTensor(TensorOrdering* ordering) {
     double start_time = omp_get_wtime();
 
-    logger.makeSilentLog( "visualizeTensors is started for " + ordering->getOrderingName() + " " + ordering->getTensor().getName());
+    logger->makeSilentLog( "visualizeTensors is started for " + ordering->getOrderingName() + " " + ordering->getTensor().getName());
     
     int tensor_rank = ordering->getTensor().getOrder();
 
@@ -2029,15 +2034,15 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
 {    
     #pragma omp for schedule(dynamic, 1)
     for(int n = 0; n < norder; n++) 
-    { 
-        const SparseTensor &tensor = ordering->getTensor();
+    {
+        const SparseTensorCOO& tensor = dynamic_cast<const SparseTensorCOO&>(ordering->getTensor());
         const std::vector<vType>& active_modes = active_modes_s[n];
 
         const int tensor_order = tensor.getOrder();
         const vType* full_dims = tensor.getDims();
         const vType* nonzeros = tensor.getStorage();
-        const valType* values = tensor.getWeights();
-        const vType nnzCount = tensor.getNNZCount();
+        const valType* values = tensor.getValues();
+        const vType nnzCount = tensor.getNNZ();
 
         for(int i = 0; i < 3; i++) {
             dims[n][i] = full_dims[active_modes[i]];
@@ -2111,6 +2116,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
                 std::cerr << ordering->getOrderingName() << ": Error - Ordered "    << ordered_nnz[0] << " " << dims[n][0] << " | "  
                                                                                     << ordered_nnz[1] << " " << dims[n][1] << " | "  
                                                                                     << ordered_nnz[2] << " " << dims[n][2] << std::endl;
+                throw std::runtime_error("c");
             }
             for(int d = 0; d < 3; d++) {
                 binIDs[d] = calculateBin(ordered_nnz[d], dims[n][d], vis_dims[n][d]);
@@ -2134,7 +2140,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
             }
         }
         double end_time = omp_get_wtime();
-        //logger.makeSilentLog(ordering->getOrderingName() + ": " + ordering->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
+        //logger->makeSilentLog(ordering->getOrderingName() + ": " + ordering->getTensor().getName() + " - nonzeros are processed in ", end_time - start_time);
 
         for(int d = 0; d < 3; d++) {
             for(vType v = 0; v < fiberMins[d].size(); v++) {
@@ -2161,7 +2167,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
 
         stats[n].tensorName = ordering->getTensor().getName();
         stats[n].orderingName = ordering->getOrderingName();
-        logger.logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
+        logger->logTensorProcessing(TENSOR_VISUALIZATION_FILES_DIR + filename + ".html", stats[n], end_time - start_time);
     }
 }
 
@@ -2234,7 +2240,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
         html_file << " x " << ordering->getTensor().getDims()[i];
      }
      html_file <<  "</h3>";
-    html_file << "<h3 class=\"title-sub\">Nonzeros: " << ordering->getTensor().getNNZCount() << "</h3>";
+    html_file << "<h3 class=\"title-sub\">Nonzeros: " << ordering->getTensor().getNNZ() << "</h3>";
 
     html_file << "</div>\n"; // Close right header div
     html_file << "</div>\n"; // Close header div
@@ -2319,7 +2325,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
         }
         stats[n].geo_mean_nnz = stats[n].geo_mean_nnz / (stats[n].no_bins - stats[n].no_empty_bins);
         stats[n].geo_mean_nnz = exp(stats[n].geo_mean_nnz);
-        stats[n].mean_nnz = (double(ordering->getTensor().getNNZCount())) / (stats[n].no_bins - stats[n].no_empty_bins);
+        stats[n].mean_nnz = (double(ordering->getTensor().getNNZ())) / (stats[n].no_bins - stats[n].no_empty_bins);
        
         vector<vector<int>> *sums[3] = {&topDownSum, &sideSum, &tubeSum};
         vector<vector<int>> *totalValuesArrays[] = {&topDownTotalValues, &sideTotalValues, &tubeTotalValues};
@@ -2867,18 +2873,19 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
             html_file << "</div>\n"; // Close plotsContainer
             html_file << "</div>\n"; // Close orderDiv
         }
-    
+
 
     html_file << R"(
-      <div style='text-align: center; padding: 10px;'>
-      <img src='logo.png' alt='Logo' style='width: 200px;'>
-      <p> © 2024 SparCity</p>
-      </div>
-      </body>
-      </html>
-      )";
+    <div style='text-align: center; padding: 10px;'>
+    <img src=')" + LOGO_PATH +
+                 R"(' alt='Logo' style='width: 200px;'>
+    <p> © 2024 SparCity</p>
+    </div>
+    </body>
+    </html>
+    )";
     html_file.close();
-    logger.makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
+    logger->makeSilentLog("File " + filename + ".html" + " is generated", omp_get_wtime() - start_time);
    
     // Cleanup
     for (int n = 0; n < norder; ++n)

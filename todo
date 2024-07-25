@@ -1,0 +1,56 @@
+D SparseVizLog -> GPU Kernel LOG
+D SparseVizLog -> FullSparseTensor Log
+D making TIMING_LOG to work as expected (should only have an effect on terminal logging not csv)
+
+
+Future work --------------------------------------------
+D why saving natural orderings into binary file?
+D/K dimensions in tensor file should not be necessary [COMPLETED]
+D why some locks are initialized and destroyed in main.cpp?, clean them
+D csf + hicoo
+D performance module, perf for orderings and kernels + cupti for gpu kernels and future gpu parallel orderings - cpu [COMPLETED] gpu: []
+D IO written from scratch, parallel IO module - matrix: [] tensor: [COMPLETED]
+D kernel overview for efficiency
+D: add matrix kernels for cpu and gpu
+K/D add cpu tensor kernels
+K/D add gpu tensor kernels
+K/D MPI Kernels
+D/K: Parallel CPU/GPU ordering of the matrices
+K/D add matrix lexi ordering
+K/D add tensor lexi ordering
+K/D add COO to CSF conversion to tensor for CSF-based kernels
+D/K add cpu affinity support
+D/K add gpu grid/block auto multi/dimension support
+D/K add [CPU] in front of cpu kernel log
+D: make ordering supported matrix a shared object among all matrices constructed during kernel runs (in fact deleting ordering supported matrices before kernel runs would even be better)
+D/K: why constructing the ordered matrix breaks our m_Ptr storage approach starting with the index of 1 instead of 0.
+D/K: why warning issued saying amd dictates matrix to be a pattern symmetric matrix, FullChip.mtx is already a pattern symmetric matrix
+D/K: Min Degree is problematic (tested with FullChip.mtx)
+K/D adding eType
+D: Testing
+D .ord extension for plaintext (external) ordering
+K/S add GORDER
+K add new RCM-jaccard sparsification
+K use bipartite graphs for rectangular, unsymmetric matrices in addition (or inplace of A+A')
+K add matrix Maxi-BFS
+K add tensor Maxi-BFS
+K add METIS orderings (similar to PATOH with inner)
+K active modes is not vType - simple int
+K python binding
+K matlab binding
+K Extract features, kernel specific shap (Explainability) analysis and visualization
+K Graph Hypergraph partitioniong, clustering visualization (multilevel for scalability)
+K Error distribution for tensor decomposition
+K Embedding - PCA - 3d visualization threejs
+K Add vertex names and other metadata for graph visualization
+K Add tensor dimension names for tensor visualization
+K Add mohp as another ordering algorithm
+
+
+Tensor Project:
+csf bug fix
+saving of different tensor formats (handle somehow or just save their coo)
+Morton Sort not working
+lexi order && bfs order
+
+Jackard Project:

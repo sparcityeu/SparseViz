@@ -76,15 +76,15 @@ public:
     void pushGPUKernelResult(const GPUKernelResult& gpuKernelResult);
 
     // GETTERS
-    std::string getOrderingName() const {return orderingName;}
-    double getOrderingPrice() const {return orderingPrice;}
-    bool hasRectangularSupport() const {return rectangularSupport;}
-    bool hasPatternUnsymmetricSupport() const {return patternUnsymmetricSupport;}
-    const vType* getRowIPermutation() const;
-    const vType* getColIPermutation() const;
-    const SparseMatrix& getMatrix();
-    const std::vector<KernelResult>& getKernelResults() const {return kernelResults;}
-    const std::vector<GPUKernelResult>& getGPUKernelResults() const {return gpuKernelResults;}
+    [[maybe_unused]] [[nodiscard]] std::string getOrderingName() const {return orderingName;}
+    [[maybe_unused]] [[nodiscard]] double getOrderingPrice() const {return orderingPrice;}
+    [[maybe_unused]] [[nodiscard]] bool hasRectangularSupport() const {return rectangularSupport;}
+    [[maybe_unused]] [[nodiscard]] bool hasPatternUnsymmetricSupport() const {return patternUnsymmetricSupport;}
+    [[maybe_unused]] [[nodiscard]] const vType* getRowIPermutation() const;
+    [[maybe_unused]] [[nodiscard]] const vType* getColIPermutation() const;
+    [[maybe_unused]] [[nodiscard]] const SparseMatrix& getMatrix();
+    [[maybe_unused]] [[nodiscard]] const std::vector<KernelResult>& getKernelResults() const {return kernelResults;}
+    [[maybe_unused]] [[nodiscard]] const std::vector<GPUKernelResult>& getGPUKernelResults() const {return gpuKernelResults;}
 
 protected:
     /*!

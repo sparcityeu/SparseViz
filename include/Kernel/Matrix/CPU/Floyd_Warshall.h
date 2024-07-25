@@ -19,7 +19,7 @@ public:
     virtual void functionBody(const SparseMatrix& A, int iterNumber) override;
 
 public:
-    unsigned** dists;
+    valType** dists;
 
 private:
     vType vertexCount;

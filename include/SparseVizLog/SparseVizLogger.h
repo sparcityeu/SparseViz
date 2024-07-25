@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include "SparseVizPerformance.h"
 
 class SparseMatrix;
 class MatrixOrdering;
@@ -24,7 +25,7 @@ public:
     void logReadingMatrixMarket(SparseMatrix* matrix, double duration);
     void logReadingMatrixBinary(SparseMatrix* matrix, double duration);
     void logWritingMatrixBinary(SparseMatrix* matrix, double duration);
-    void logMatrixOrdering(MatrixOrdering* ordering, double duration);
+    void logMatrixOrdering(MatrixOrdering* ordering, double duration, SparseVizPerformance::OperationResults operationResults);
     void logReadingMatrixOrdering(MatrixOrdering* ordering, double duration);
     void logWritingMatrixOrdering(MatrixOrdering* ordering, double duration);
     void logConstructingOrderedMatrix(MatrixOrdering* ordering, double duration);
@@ -32,14 +33,14 @@ public:
     void logReadingTensorMarket(SparseTensor* tensor, double duration);
     void logReadingTensorBinary(SparseTensor* tensor, double duration);
     void logWritingTensorBinary(SparseTensor* tensor, double duration);
-    void logTensorOrdering(TensorOrdering* ordering, double duration);
+    void logTensorOrdering(TensorOrdering* ordering, double duration, SparseVizPerformance::OperationResults operationResults);
     void logReadingTensorOrdering(TensorOrdering* ordering, double duration);
     void logWritingTensorOrdering(TensorOrdering* ordering, double duration);
     void logConstructingOrderedTensor(TensorOrdering* ordering, double duration);
 
-    void logRunningMatrixKernel(const KernelResult& kernelResult, MatrixOrdering* ordering);
+    void logRunningMatrixKernel(const KernelResult& kernelResult, MatrixOrdering* ordering, SparseVizPerformance::OperationResults operationResults);
     void logRunningGPUMatrixKernel(const GPUKernelResult& kernelResult, MatrixOrdering* ordering);
-    void logRunningTensorKernel(const KernelResult& kernelResult, TensorOrdering* ordering);
+    void logRunningTensorKernel(const KernelResult& kernelResult, TensorOrdering* ordering, SparseVizPerformance::OperationResults operationResults);
     void logRunningGPUTensorKernel(const GPUKernelResult& kernelResult, TensorOrdering* ordering);
 
     void logMatrixProcessing(const std::string& filename, const Statistic& stat, double duration);
@@ -63,6 +64,7 @@ private:
     std::vector<std::string> m_ReadingMatrixBinary;
     std::vector<std::string> m_WritingMatrixBinary;
     std::vector<std::string> m_MatrixOrdering;
+    std::vector<SparseVizPerformance::OperationResults> m_MatrixOrderingResults;
     std::vector<std::string> m_ReadingMatrixOrdering;
     std::vector<std::string> m_WritingMatrixOrdering;
     std::vector<std::string> m_ConstructingOrderedMatrix;
@@ -71,16 +73,19 @@ private:
     std::vector<std::string> m_ReadingTensorBinary;
     std::vector<std::string> m_WritingTensorBinary;
     std::vector<std::string> m_TensorOrdering;
+    std::vector<SparseVizPerformance::OperationResults> m_TensorOrderingResults;
     std::vector<std::string> m_ReadingTensorOrdering;
     std::vector<std::string> m_WritingTensorOrdering;
     std::vector<std::string> m_ConstructingOrderedTensor;
 
     std::vector<std::string> m_RunningMatrixKernel;
+    std::vector<SparseVizPerformance::OperationResults> m_MatrixKernelResults;
     std::set<int> m_MatrixKernelThreadCounts;
     std::vector<std::vector<int>> m_ThreadCountsForEachMatrixKernel;
     std::vector<std::vector<double>> m_DurationsForEachMatrixKernel;
 
     std::vector<std::string> m_RunningTensorKernel;
+    std::vector<SparseVizPerformance::OperationResults> m_TensorKernelResults;
     std::set<int> m_TensorKernelThreadCounts;
     std::vector<std::vector<int>> m_ThreadCountsForEachTensorKernel;
     std::vector<std::vector<double>> m_DurationsForEachTensorKernel;

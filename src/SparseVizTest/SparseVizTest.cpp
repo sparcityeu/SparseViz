@@ -360,7 +360,7 @@ void SparseVizTest::runTests(unsigned int totalTestNo)
 void SparseVizTest::initializeTestDirectory()
 {
     m_CurrentDirectory = TEST_DIRECTORY + "TEST" + std::to_string(m_CurrentTestNo) + '/';
-    mkdir(m_CurrentDirectory.c_str(), 0777);
+    //mkdir(m_CurrentDirectory.c_str(), 0777);
 }
 
 void SparseVizTest::allocateTestLogFile()

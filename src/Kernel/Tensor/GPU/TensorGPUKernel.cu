@@ -4,7 +4,7 @@
 
 void TensorGPUKernel::postprocess(const SparseTensor& A, int iter)
 {
-    logger.makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
+    logger->makeSilentLog("Iteration " + std::to_string(iter) + " is completed on " + A.getName());
 }
 
 GPUKernelResult TensorGPUKernel::operator()(const SparseTensor& A)
@@ -19,7 +19,7 @@ GPUKernelResult TensorGPUKernel::operator()(const SparseTensor& A)
             {
                 this->preprocess(A);
                 double start = omp_get_wtime();
-                this->hostFunction(A, r, gridSizes[i], blockSizes[i]);
+                this->hostFunction(A, r, gridSizes[i], blockSizes[i], sharedMemorySizes[i]);
                 double end = omp_get_wtime();
 
                 if(r >= nIgnore)
@@ -35,5 +35,5 @@ GPUKernelResult TensorGPUKernel::operator()(const SparseTensor& A)
             durations.push_back(duration);
         }
     }
-    return {kernelName, gridSizes, blockSizes, durations};
+    return {kernelName, gridSizes, blockSizes, sharedMemorySizes, durations};
 }

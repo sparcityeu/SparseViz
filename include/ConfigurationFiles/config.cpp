@@ -27,8 +27,8 @@ std::string TEST_DIRECTORY = "/home/users/kaya/SparseViz/TestFiles/";
 std::string TEST_CONFIG = TEST_DIRECTORY + "template_test_file";
 TensorType TENSOR_STORAGE_TYPE;
 BlockType BLOCK_SIZE;
-bool ORDERING_PERFORMANCE_LOG;
-bool KERNEL_PERFORMANCE_LOG;
+bool ORDERING_PERFORMANCE_LOG = false;
+bool KERNEL_PERFORMANCE_LOG = false;
 
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)

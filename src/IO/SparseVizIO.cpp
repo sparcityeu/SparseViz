@@ -65,11 +65,18 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     bool isSymmetric = mm_is_symmetric(matcode);
 
     int nnz;
+    int loopIter;
     if (mm_read_mtx_crd_size(f, &row, &column, &nnz) != 0)
     {
         fclose(f);
         throw std::runtime_error(marketFileName + ": Could not read coordinate size.");
     }
+    loopIter = nnz;
+    if (isSymmetric)
+    {
+        nnz *= 2;
+    }
+
     vType* storage = new vType[nnz * 2];
     valType* values = new valType[nnz];
 
@@ -77,56 +84,38 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     double val;
     char line[256];
 
-    fgets(line, sizeof(line), f);
-    int itemsRead = sscanf(line, "%d %d %lf", &r, &c, &val);
-    storage[0] = --r; storage[1] = --c;
-    if (itemsRead == 2)
+    for (int i = 0; i < loopIter; ++i)
     {
-        memset(values, 1, sizeof(valType) * nnz);
+        fgets(line, sizeof(line), f);
+        int itemsRead = sscanf(line, "%d %d %lf", &r, &c, &val);
 
-        for (int i = 1; i != nnz; ++i)
+        --r; // converting 1-based indexing to 0-based indexing
+        --c;
+
+        int nnzStart = i * 2;
+        storage[nnzStart] = r;
+        storage[nnzStart + 1] = c;
+
+        if (itemsRead == 2)
         {
-            fgets(line, sizeof(line), f);
-            sscanf(line, "%d %d", &r, &c);
-
-            --r; // converting 1-based indexing to 0-based indexing
-            --c;
-            eType nnzStart = i * 2;
-
-            storage[nnzStart] = r;
-            storage[nnzStart + 1] = c;
+            values[i] = 1;
 
             if (isSymmetric && (r != c))
             {
-                nnzStart = (i + 1) * 2;
-                storage[nnzStart] = c;
-                storage[nnzStart + 1] = r;
+                storage[(i + loopIter) * 2] = c;
+                storage[(i + loopIter) * 2 + 1] = r;
+                values[i + loopIter] = 1;
             }
         }
-    }
-    else
-    {
-        values[0] = val;
-
-        for (int i = 1; i < nnz; ++i)
+        else
         {
-            fgets(line, sizeof(line), f);
-            sscanf(line, "%d %d %lf", &r, &c, &val);
-
-            --r; // converting 1-based indexing to 0-based indexing
-            --c;
-            eType nnzStart = i * 2;
-
-            storage[nnzStart] = r;
-            storage[nnzStart + 1] = c;
             values[i] = val;
 
             if (isSymmetric && (r != c))
             {
-                nnzStart = (i + 1) * 2;
-                storage[nnzStart] = c;
-                storage[nnzStart + 1] = r;
-                values[i + 1] = val;
+                storage[(i + loopIter) * 2] = c;
+                storage[(i + loopIter) * 2 + 1] = r;
+                values[i + loopIter] = val;
             }
         }
     }

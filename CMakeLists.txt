@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(SparseViz)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 # OpenMP
 find_package(OpenMP REQUIRED)
@@ -169,7 +169,7 @@ set(SOURCE_FILES
         src/sort.cpp
 )
 
-file(READ "/home/delbek/sparseviz/deniz_matrix_config" configContent)
+file(READ " -- YOUR CONFIG FILE TO GET PROJECT INFO -- " configContent)
 string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
 set(rabbitLicence ${CMAKE_MATCH_1})
 string(STRIP ${rabbitLicence} rabbitLicence)
@@ -203,7 +203,6 @@ endif()
 
 add_executable(SparseViz
         ${SOURCE_FILES}
-        README.md
 )
 
 target_link_libraries(SparseViz

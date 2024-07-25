@@ -100,7 +100,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
         {
             values[i] = 1;
 
-            if (isSymmetric && (r != c))
+            if (isSymmetric)
             {
                 storage[(i + loopIter) * 2] = c;
                 storage[(i + loopIter) * 2 + 1] = r;
@@ -111,7 +111,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
         {
             values[i] = val;
 
-            if (isSymmetric && (r != c))
+            if (isSymmetric)
             {
                 storage[(i + loopIter) * 2] = c;
                 storage[(i + loopIter) * 2 + 1] = r;

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://sparcityeu.github.io/sparseviz/addingTensorOrdering/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Adding Tensor Ordering - SparseViz</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Adding Tensor Ordering";
+        var mkdocs_page_input_path = "addingTensorOrdering.md";
+        var mkdocs_page_url = "/sparseviz/addingTensorOrdering/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> SparseViz
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../configUse/">Config File</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">EXTENDING LIBRARY BEYOND</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../addingMatrixOrdering/">Adding Matrix Ordering</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Adding Tensor Ordering</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#step-1-creating-a-custom-ordering-class">Step 1: Creating a Custom Ordering Class</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#step-2-adding-files-into-cmakeliststxt">Step 2: Adding Files into CMakeLists.txt</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#step-3-adding-ordering-definition-into-sparsevizengine">Step 3: Adding Ordering Definition Into SparseVizEngine</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingCPUMatrixKernel/">Adding CPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingGPUMatrixKernel/">Adding GPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingCPUTensorKernel/">Adding CPU Tensor Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingGPUTensorKernel/">Adding GPU Tensor Kernel</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licence/">Licence</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">SparseViz</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">EXTENDING LIBRARY BEYOND</li>
+      <li class="breadcrumb-item active">Adding Tensor Ordering</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="tutorial-3-how-to-add-tensor-ordering">Tutorial 3: How to Add Tensor Ordering</h1>
+<p>SparseViz allows its users to add the custom tensor orderings that they
+want to implement on their tensors. Adding such tensor orderings into
+SparseViz involves a couple of elementary steps. In this tutorial, these
+steps are going to be explained in a detailed manner.</p>
+<p>Every custom tensor ordering in the SparseViz ecosystem derives from the
+abstract TensorOrdering class. SparseViz/include/Tensor/Orderings is
+where the header file of this custom ordering class could be created and
+SparseViz/src/Tensor/Orderings is where the source file of this custom
+ordering class could be created. In this tutorial, we are going to
+create an example tensor ordering named AddingTensorOrdering and show
+how it can be integrated into the library.</p>
+<h2 id="step-1-creating-a-custom-ordering-class">Step 1: Creating a Custom Ordering Class</h2>
+<p>First, we will create the AddingTensorOrdering.h file in the
+SparseViz/include/Tensor/Orderings directory.</p>
+<p>The header file will contain the declaration of our class, which
+consists of only 5 lines of C++ code.</p>
+<p><em>AddingTensorOrdering.h</em></p>
+<pre><code class="language-cpp">#include &quot;TensorOrdering.h&quot;
+
+class AddingTensorOrdering: public TensorOrdering
+
+{
+
+    public:
+
+    AddingTensorOrdering (SparseTensor&amp; tensor, const std::vector\&lt;vType\&gt;&amp; active_modes, std::string orderingName, std::string orderingParameters);
+
+    virtual void orderingFunction() override;
+
+};
+</code></pre>
+<p>TensorOrdering has only one pure virtual function that it dictates to be
+overridden by every derived class. This function is called
+orderingFunction which would carry the implementation of the ordering
+logic. In addition to that, a constructor should be written for the
+custom tensor ordering classes whose first 3 parameters have to be the
+reference to the tensor on which the ordering will be applied, the
+active modes of the tensor, and the name of the ordering, respectively.
+The fourth parameter is optional in that it can be skipped safely if the
+custom order does not need any parameters to work properly.</p>
+<p>Having declared our class, next is to create its source file named
+AddingTensorOrdering.cpp under the directory
+SparseViz/src/Tensor/Orderings.</p>
+<p><em>AddingTensorOrdering.cpp</em></p>
+<pre><code class="language-cpp">#include &quot;AddingTensorOrdering.h&quot;
+
+AddingTensorOrdering:: AddingTensorOrdering (SparseTensor &amp;tensor, const std::vector&lt;vType&gt;&amp; active_modes, std::string orderingName, std::string orderingParameters)
+:   TensorOrdering(tensor, active_modes, orderingName, 5)
+
+{
+
+    // Ordering parameters could be parsed (remember the delimiter is '/')
+
+    // and appropriate private member variables could be set here
+
+}
+
+void AddingTensorOrdering::orderingFunction()
+
+{
+
+    vType tensorOrder = this-&gt;getTensor().getOrder();
+
+    orderedDimensions = new vType*[tensorOrder];
+
+    for (int i = 0; i != tensorOrder; ++i)
+
+    {
+
+        orderedDimensions[i] = new vType[dims[i]];
+
+    }
+
+    // Your ordering function logic goes here
+
+}
+</code></pre>
+<p>There are a couple of important parts in the source code that require
+careful attention. The first is the initialization of the base class
+TensorOrdering in the constructor of the AddingTensorOrdering class.
+TensorOrdering expects the following parameters to be provided.</p>
+<p>SparseTensor&amp; tensor</p>
+<p>const std::vector<vType>&amp; active_modes</p>
+<p>std::string orderingName</p>
+<p>unsigned int orderingFunctionPrice = 0</p>
+<p>The first 3 parameters, matrix, active_modes, and orderingName, could
+easily be provided to the parent class with the constructor parameters
+of the child class. The last parameter is an integer between 0 to 10
+representing the overhead of the ordering function. Although it has a
+default value of 0, we recommend custom ordering derived classes to
+specify this value, as appropriate values could increase the performance
+of the program. For our ordering class, we will assume that it has an
+orderingFunction overhead value of 5.</p>
+<p>The last important remark that we need to make is that in the custom
+tensor orderings, a matrix should be generated by the orderingFunction.
+This matrix is a protected member variable of TensorOrdering called
+orderedDimensions that would keep track of the new locations of each
+dimension after the ordering is implemented. This matrix should be
+allocated on the heap as shown in the above code snippet. The custom
+tensor ordering class is not responsible for deleting this matrix, as
+the base TensorOrdering class will safely handle this.</p>
+<h2 id="step-2-adding-files-into-cmakeliststxt">Step 2: Adding Files into CMakeLists.txt</h2>
+<p>In the former step, we created our header file and source file for our
+class named AddingTensorOrdering. In this step, we are going to include
+these files in our build automation tool. SparseViz utilizes CMake as
+its build system. In the CMakeLists.txt file located under the project
+directory, we should include our header file under the HEADER_FILES
+environment variable and include our source under the SOURCE_FILES
+environment variable, like so:</p>
+<p><em>CMakeLists.txt</em></p>
+<pre><code class="language-cpp">set(HEADER_FILES
+
+    --- OTHER HEADER FILES (CROPPED) ---
+
+    include/Tensor/Orderings/AddingTensorOrdering.h
+
+)
+
+set(SOURCE_FILES
+
+    --- OTHER SOURCE FILES (CROPPED) ---
+
+    src/Tensor/Orderings/AddingTensorOrdering.cpp
+
+)
+</code></pre>
+<h2 id="step-3-adding-ordering-definition-into-sparsevizengine">Step 3: Adding Ordering Definition Into SparseVizEngine</h2>
+<p>As the last step, we are going to add our ordering class definition into
+SparseVizEngine and allow the library to identify the presence of this
+ordering. As our first job, we are going to include our custom ordering
+class' header file into the SparseVizEngine.h:</p>
+<p><em>SparseVizEngine.h</em></p>
+<pre><code class="language-cpp">#include &quot;AddingTensorOrdering.h&quot;
+</code></pre>
+<p>After that, we are going to add the definition of the class to the
+tensor ordering factory function located in the source file of the
+SparseVizEngine</p>
+<p><em>SparseVizEngine.cpp</em></p>
+<pre><code>TensorOrdering *SparseVizEngine::tensorOrderingFactory(SparseTensor&amp;tensor, const std::vector&lt;vType&gt;&amp; active_modes, std::string orderingClassName, std::string orderingName, std::string orderingParameters)
+
+{
+
+    --- OTHER ORDERING CLASSES (CROPPED) ---
+
+    else if (orderingClassName == &quot;AddingTensorOrdering&quot;)
+
+    {
+
+        return new AddingTensorOrdering(tensor, active_modes, orderingName, orderingParameters);
+
+    }
+
+    return nullptr;
+
+}
+</code></pre>
+<p>Having done this, we can easily run this ordering from within the config
+file by indicating it under the section *TENSOR_ORDERINGS*, like so:</p>
+<p><em>config</em></p>
+<pre><code class="language-cpp">*TENSOR_ORDERINGS*
+
+AddingTensorOrdering | WeHaveAddedATensorOrdering | Param1/Param2/Param3
+</code></pre>
+<p>This concludes tutorial 3, the way to add tensor orderings into the
+library.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../addingMatrixOrdering/" class="btn btn-neutral float-left" title="Adding Matrix Ordering"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../addingCPUMatrixKernel/" class="btn btn-neutral float-right" title="Adding CPU Matrix Kernel">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../addingMatrixOrdering/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../addingCPUMatrixKernel/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

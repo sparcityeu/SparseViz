@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://sparcityeu.github.io/sparseviz/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>SparseViz</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/sparseviz/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> SparseViz
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#core-principle">Core Principle</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#key-features-of-sparseviz">Key Features of SparseViz</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extensibility">Extensibility</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="configUse/">Config File</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">EXTENDING LIBRARY BEYOND</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="addingMatrixOrdering/">Adding Matrix Ordering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="addingTensorOrdering/">Adding Tensor Ordering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="addingCPUMatrixKernel/">Adding CPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="addingGPUMatrixKernel/">Adding GPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="addingCPUTensorKernel/">Adding CPU Tensor Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="addingGPUTensorKernel/">Adding GPU Tensor Kernel</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="licence/">Licence</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">SparseViz</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Home</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="sparseviz-documentation">SparseViz Documentation</h1>
+<h2 id="introduction">Introduction</h2>
+<p>Welcome to the documentation of SparseViz, a comprehensive library
+designed for efficient and intuitive handling of sparse data structures.
+In the realm of data processing and analysis, sparse data structures are
+pivotal for managing datasets with predominantly empty or zero-valued
+elements. SparseViz emerges as a versatile tool, bridging the gap
+between the complexity of sparse data operations and the need for a
+user-friendly approach.</p>
+<h2 id="core-principle">Core Principle</h2>
+<p>SparseViz is built upon the principle of simplifying the interaction
+with sparse data structures. Whether you are a data scientist, a
+researcher, or a developer working with large, sparse datasets,
+SparseViz offers a suite of functionalities that cater to your needs.
+This library not only facilitates the efficient representation and
+manipulation of sparse data but also extends its capabilities to various
+operations such as implementing orderings, executing kernels, and
+visualizing them. Moreover, SparseViz is not just a tool; it's a
+growing ecosystem. We've designed it with extensibility in mind,
+allowing for continuous development and integration of new features and
+methods.</p>
+<h2 id="key-features-of-sparseviz">Key Features of SparseViz</h2>
+<p>As indicated, SparseViz is not just a tool; it is a dynamic and
+expanding ecosystem thoughtfully crafted to cater to a wide range of
+applications involving sparse data structures. Its capabilities are
+diverse and powerful, designed to address the various challenges and
+needs encountered in working with sparse data. Here are the key features
+that make SparseViz an indispensable library:</p>
+<ul>
+<li>
+<p>Representation of Sparse Data Structures: SparseViz excels in the
+    efficient handling and representation of sparse matrices and
+    tensors, making it easier to work with large, sparse datasets.</p>
+</li>
+<li>
+<p>Comprehensive Operations: The library supports a broad spectrum of
+    operations on sparse data structures. From basic manipulations to
+    more complex transformations, SparseViz ensures that these
+    operations are both efficient and intuitive.</p>
+</li>
+<li>
+<p>Flexible Ordering Systems: SparseViz allows for customizable
+    ordering of sparse data structures. This feature is particularly
+    useful for optimizing data (to increase cache-hit) for specific
+    algorithms or processing techniques.</p>
+</li>
+<li>
+<p>Kernel Execution: With SparseViz, users can execute their customized
+    kernels on sparse data. This functionality is essential for
+    understanding the efficiency of the implemented orderings in
+    practical terms.</p>
+</li>
+<li>
+<p>Efficient Storage Solutions: The library offers optimized storage
+    solutions for sparse data. This ensures that large datasets are not
+    only stored efficiently but are also easily retrievable for future
+    use.</p>
+</li>
+<li>
+<p>Advanced Visualization Tools: One of the standout features of
+    SparseViz is its capability to visualize sparse data structures.
+    This tool is invaluable for understanding complex data patterns and
+    for communicating findings in a clear and impactful way.</p>
+</li>
+</ul>
+<h2 id="extensibility">Extensibility</h2>
+<p>At SparseViz, we encourage and support our users to not only use the
+existing functionalities but to also contribute to the library's growth
+by implementing their orderings, writing custom kernels, and extending
+the library in various ways. To facilitate this, we have established a
+robust infrastructure that allows for seamless customization and
+extension. There are four primary ways you can customize and extend the
+library:</p>
+<ol>
+<li>
+<p>Adding Matrix Ordering</p>
+</li>
+<li>
+<p>Adding Tensor Ordering</p>
+</li>
+<li>
+<p>Adding Matrix Kernels</p>
+<p>3.1.  Adding CPU Matrix Kernels</p>
+<p>3.2.  Adding GPU Matrix Kernels</p>
+</li>
+<li>
+<p>Adding Tensor Kernels</p>
+<p>4.1.  Adding CPU Tensor Kernels</p>
+<p>4.2.  Adding GPU Tensor Kernels</p>
+</li>
+</ol>
+<p>Before delving into the specifics of each extension method, we will
+first introduce you to the config file. The config file is a crucial
+component of SparseViz, allowing for tailored library configuration and
+setup. Understanding its role and usage is key to effectively extending
+and customizing SparseViz.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="configUse/" class="btn btn-neutral float-right" title="Config File">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="configUse/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = ".";</script>
+    <script src="js/theme_extra.js"></script>
+    <script src="js/theme.js"></script>
+      <script src="search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2025-03-18 18:42:31.036577+00:00
+-->

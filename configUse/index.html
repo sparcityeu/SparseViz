@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://sparcityeu.github.io/sparseviz/configUse/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Config File - SparseViz</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Config File";
+        var mkdocs_page_input_path = "configUse.md";
+        var mkdocs_page_url = "/sparseviz/configUse/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> SparseViz
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Config File</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#licences">*LICENCES*</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#settings">*SETTINGS*</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#important-remarks">IMPORTANT REMARKS</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#log_file">LOG_FILE</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#timing_log">TIMING_LOG</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#export_ordered_sparse_structures">EXPORT_ORDERED_SPARSE_STRUCTURES</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#use_existing_ordered_sparse_structures">USE_EXISTING_ORDERED_SPARSE_STRUCTURES</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#export_orderings">EXPORT_ORDERINGS</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#use_existing_orderings">USE_EXISTING_ORDERINGS</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#project_dir">* PROJECT_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix_files_dir">? MATRIX_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix_ordering_files_dir">? MATRIX_ORDERING_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matrix_visualization_files_dir">? MATRIX_VISUALIZATION_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tensor_files_dir">? TENSOR_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tensor_ordering_files_dir">? TENSOR_ORDERING_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tensor_visualization_files_dir">? TENSOR_VISUALIZATION_FILES_DIR</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#logo_path">LOGO_PATH</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#favicon_path">FAVICON_PATH</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#max_dim">MAX_DIM</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#zoo_type">* ZOO_TYPE</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#chart_type">* CHART_TYPE</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#matrices">*MATRICES*</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#matrix_orderings">*MATRIX_ORDERINGS*</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tensors">*TENSORS*</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tensor_orderings">*TENSOR_ORDERINGS*</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#matrix_kernels">*MATRIX_KERNELS*</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-thread-counts">Setting Thread Counts:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-scheduling-policy">Setting Scheduling Policy:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-chunk-size">Setting Chunk Size:</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gpu_matrix_kernels">*GPU_MATRIX_KERNELS*</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-grid-size">Setting Grid Size:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-block-size">Setting Block Size:</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#tensor_kernels">*TENSOR_KERNELS*</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-thread-counts_1">Setting Thread Counts:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-scheduling-policy_1">Setting Scheduling Policy:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-chunk-size_1">Setting Chunk Size:</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gpu_tensor_kernels">*GPU_TENSOR_KERNELS*</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-grid-size_1">Setting Grid Size:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#setting-block-size_1">Setting Block Size:</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#zoo-types">ZOO TYPES</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#mat">"MAT"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#matord">"MATORD"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tens">"TENS"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#tensord">"TENSORD"</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#fulltensor">"FULLTENSOR"</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">EXTENDING LIBRARY BEYOND</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingMatrixOrdering/">Adding Matrix Ordering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingTensorOrdering/">Adding Tensor Ordering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingCPUMatrixKernel/">Adding CPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingGPUMatrixKernel/">Adding GPU Matrix Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingCPUTensorKernel/">Adding CPU Tensor Kernel</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../addingGPUTensorKernel/">Adding GPU Tensor Kernel</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../licence/">Licence</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">SparseViz</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Config File</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="tutorial-1-how-to-use-the-config-file">Tutorial 1: How to Use the Config File</h1>
+<p>The config file in SparseViz plays a crucial role, allowing the library
+to function effectively without the need for writing additional C/C++
+code. It facilitates the use of pre-implemented orderings and kernels,
+enabling users to visualize matrices and tensors efficiently. This
+tutorial aims to guide you through the nuances of effectively utilizing
+the config file.</p>
+<p>In SparseViz, the config file is seperated into various sections with each of which adding different functionality to the config file.
+These sections are prefixed and suffixed with * to notice the config file reader that they are section headings.
+Here are the sections that are currently available for use within SparseViz:</p>
+<h2 id="licences">*LICENCES*</h2>
+<p>This is the section under which every license should be indicated,
+like so:</p>
+<pre><code>RABBIT_LICENCE = rabbit_licence.txt
+</code></pre>
+<p>If you lack certain licenses, you should indicate their absence with
+"None".</p>
+<h2 id="settings">*SETTINGS*</h2>
+<p>This is perhaps the most important section of the config file. Under
+which you should indicate various settings that are going to determine
+how your library is going to be initiated. Here are all the settings
+that can or should be given under this section, as well as their
+explanations as to what they are doing.</p>
+<h3 id="important-remarks">IMPORTANT REMARKS</h3>
+<p>Settings prefixed with * indicate that its explicit definition is
+mandatory in the config file, otherwise program will prompt a runtime
+error.</p>
+<p>Settings prefixed with ? indicates that its explicit definition is
+mandatory under certain conditions, which will be explained at the end
+of this tutorial. The absence of them will prompt a runtime error if
+these conditions are met.</p>
+<h3 id="log_file">LOG_FILE</h3>
+<pre><code>LOG_FILE = [YOUR CSV PATH]
+</code></pre>
+<p>SparseViz provides a performance logger that is accessible upon the
+termination of the program to showcase the details of each of the
+operations made with sparse data structures. This setting determines
+the path of the CSV to which the performance logging is going to be
+written.</p>
+<h3 id="timing_log">TIMING_LOG</h3>
+<pre><code>TIMING_LOG = [YOUR BOOLEAN VALUE] // Default = true
+</code></pre>
+<p>In addition to providing a CSV file upon termination, SparseViz is also
+able to log the performance values onto the terminal if requested by
+this setting. Enabling this is going to make every one of the
+performance reports to be logged onto the terminal.</p>
+<h3 id="export_ordered_sparse_structures">EXPORT_ORDERED_SPARSE_STRUCTURES</h3>
+<pre><code>EXPORT_ORDERED_SPARSE_STRUCTURES = [YOUR BOOLEAN VALUE] // Default = true
+</code></pre>
+<p>As indicated in the introduction, SparseViz can export and save sparse
+structures onto files for easy retrieval in further usage. This
+setting determines whether sparse structures having gone through some
+type of order in the current run should be written into the disk.</p>
+<h3 id="use_existing_ordered_sparse_structures">USE_EXISTING_ORDERED_SPARSE_STRUCTURES</h3>
+<pre><code>USE_EXISTING_ORDERED_SPARSE_STRUCTURES = [YOUR BOOLEAN VALUE] // Default = true
+</code></pre>
+<p>This setting determines whether ordered sparse structures having been
+written into disk previously are allowed to be read in the subsequent
+runs.</p>
+<h3 id="export_orderings">EXPORT_ORDERINGS</h3>
+<pre><code>EXPORT_ORDERINGS = [YOUR BOOLEAN VALUE] // Default = true
+</code></pre>
+<p>Similar to EXPORT_ORDERED_SPARSE_STRUCTURES, this setting determines whether orderings that have been
+made in the current run should be written into the disk.</p>
+<h3 id="use_existing_orderings">USE_EXISTING_ORDERINGS</h3>
+<pre><code>USE_EXISTING_ORDERINGS = [YOUR BOOLEAN VALUE] // Default = true
+</code></pre>
+<p>Similar to USE_EXISTING_ORDERED_SPARSE_STRUCTURES, this setting determines whether ordering having written
+into disk previously is allowed to be read in the subsequent runs.</p>
+<h3 id="project_dir">* PROJECT_DIR</h3>
+<pre><code>PROJECT_DIR = [YOUR PATH TO PROJECT DIRECTORY]
+</code></pre>
+<p>This setting should be set to the absolute path of the directory under
+which SparseViz is located.</p>
+<h3 id="matrix_files_dir">? MATRIX_FILES_DIR</h3>
+<pre><code>MATRIX_FILES_DIR = [YOUR PATH TO MATRIX FILES DIRECTORY]
+</code></pre>
+<p>This setting is set to the absolute path of the directory under which
+your matrix files (ones ending with .mtx or .mtx.bin) are located.</p>
+<h3 id="matrix_ordering_files_dir">? MATRIX_ORDERING_FILES_DIR</h3>
+<pre><code>MATRIX_ORDERING_FILES_DIR = [YOUR PATH TO MATRIX ORDERING FILES DIRECTORY]
+</code></pre>
+<p>This setting is set to the absolute path of the directory under which
+your matrix ordering files (ones ending with .bin) are located.</p>
+<h3 id="matrix_visualization_files_dir">? MATRIX_VISUALIZATION_FILES_DIR</h3>
+<pre><code>MATRIX_VISUALIZATION_FILES_DIR = [YOUR PATH TO MATRIX VISUALIZATION FILES DIR]
+</code></pre>
+<p>This setting is set to the absolute path of the directory into which
+matrix visualization files are going to be generated. Upon termination
+of the program, all visualization-related outputs are going to be found
+there.</p>
+<h3 id="tensor_files_dir">? TENSOR_FILES_DIR</h3>
+<pre><code>TENSOR_FILES_DIR = [YOUR PATH TO TENSOR FILES DIRECTORY]
+</code></pre>
+<p>This setting is set to the absolute path of the directory under which
+your tensor files (ones ending with .tns or .tns.bin) are located.</p>
+<h3 id="tensor_ordering_files_dir">? TENSOR_ORDERING_FILES_DIR</h3>
+<pre><code>TENSOR_ORDERING_FILES_DIR = [YOUR PATH TO TENSOR ORDERING FILES DIRECTORY]
+</code></pre>
+<p>This setting is set to the absolute path of the directory under which
+your tensor ordering files (ones ending with .bin) are located.</p>
+<h3 id="tensor_visualization_files_dir">? TENSOR_VISUALIZATION_FILES_DIR</h3>
+<pre><code>TENSOR_VISUALIZATION_FILES_DIR = [YOUR PATH TO TENSOR VISUALIZATION FILES DIR]
+</code></pre>
+<p>This setting is set to the absolute path of the directory into which
+tensor visualization files are going to be generated. Upon termination
+of the program, all visualization-related outputs are going to be found
+there.</p>
+<h3 id="logo_path">LOGO_PATH</h3>
+<pre><code>LOGO_PATH = [YOUR PATH FOR THE LOGO]
+</code></pre>
+<p>This setting is set to the absolute path of the logo that will be used
+for the logo of every HTML document generated.</p>
+<h3 id="favicon_path">FAVICON_PATH</h3>
+<pre><code>FAVICON_PATH = [YOUR PATH FOR THE FAVICON]
+</code></pre>
+<p>This setting is set to the absolute path of the logo that will be used
+for the favicon of every HTML document generated.</p>
+<h3 id="max_dim">MAX_DIM</h3>
+<pre><code>MAX_DIM = [YOUR INTEGER] // Default = 64
+</code></pre>
+<p>This setting is set to an integer representing the maximum dimension
+that can be seen in the visualization files.</p>
+<h3 id="zoo_type">* ZOO_TYPE</h3>
+<pre><code>ZOO_TYPE = [YOUR ZOO TYPE] // Currently availables are: {&quot;MAT&quot;, &quot;MATORD&quot;, &quot;TENS&quot;, &quot;TENSORD&quot;, &quot;FULLTENSOR&quot;}
+</code></pre>
+<p>This setting is set to one of the 5 available zoo types that SparseViz
+currently supports. What each of them does will be explained at the end
+of this tutorial.</p>
+<h3 id="chart_type">* CHART_TYPE</h3>
+<pre><code>CHART_TYPE = [YOUR CHART TYPE] // Currently availables are: {&quot;NNZ&quot;, &quot;ABS&quot;}
+</code></pre>
+<p>This setting is set to one of 2 available chart types that SparseViz
+currently supports. It determines the chart type that will be used in
+the visualization, whether it'll be nonzero or absolute value-based.</p>
+<h2 id="matrices">*MATRICES*</h2>
+<p>This section is for providing every one of the .mtx filenames that will
+be used throughout the execution of the program. Giving only the
+filename with its appropriate extension (probably .mtx) is enough as
+their full path can be inferred with the matrix file directory setting
+you have indicated in the former section. Every .mtx filename should
+allocate a separate line.</p>
+<h2 id="matrix_orderings">*MATRIX_ORDERINGS*</h2>
+<p>This section provides every matrix ordering that will be used
+throughout the execution of the program. The usage should be as
+follows:</p>
+<pre><code>[YOUR MATRIX ORDERING CLASS NAME] [YOUR ORDERING NAME] [YOUR PARAMETERS GIVEN TO THE ORDERING CLASS CONSTRUCTOR SEPARATED WITH '/']
+</code></pre>
+<p>Indicating parameters to the ordering class constructor can be skipped
+safely, if and only if the ordering constructor does not expect any.
+Every ordering definition should allocate a separate line.</p>
+<h2 id="tensors">*TENSORS*</h2>
+<p>This section provides every one of the .tns filenames that will be used
+throughout the execution of the program. Giving only the filename with
+its appropriate extension (probably .tns) is enough as their full path
+can be inferred with the tensor file directory setting you have
+indicated in the former section. Every .tns filename should allocate a
+separate line.</p>
+<h2 id="tensor_orderings">*TENSOR_ORDERINGS*</h2>
+<p>This section provides every tensor ordering that will be used
+throughout the execution of the program. The usage should be as
+follows:</p>
+<pre><code>[YOUR TENSOR ORDERING CLASS NAME] | [YOUR ORDERING NAME] | [YOUR PARAMETERS GIVEN TO THE ORDERING CLASS CONSTRUCTOR SEPARATED WITH '/']
+</code></pre>
+<p>Indicating parameters to the ordering class constructor can be skipped
+safely, if and only if the ordering constructor does not expect any.
+Every ordering definition should allocate a separate line.</p>
+<h2 id="matrix_kernels">*MATRIX_KERNELS*</h2>
+<p>This section is for providing every CPU matrix kernel that will be
+executed on your ordered sparse matrices. The usage should be as
+follows:</p>
+<pre><code>[YOUR KERNEL NAME] | [YOUR THREAD COUNTS] | [YOUR SCHEDULING POLICY] | [YOUR CHUNK SIZE] | [YOUR N_RUN] | [YOUR N_IGNORE]
+</code></pre>
+<p>Because we have made matrix kernel parallelization possible with
+OpenMP, you are required to provide necessary OMP arguments while
+running your kernels. Currently, 3 arguments could be set from the
+config file to arrange your parallel environment, which are:</p>
+<h3 id="setting-thread-counts">Setting Thread Counts:</h3>
+<p>This is used for indicating the number of threads that will be working
+during your kernel's execution. If you want to test your kernels
+multiple times, with each of which having different thread counts
+working on, you can give an array of thread counts directly from
+within the config file by separating its elements with a delimiter of
+'/', like so: 1/2/4/8/16.</p>
+<h3 id="setting-scheduling-policy">Setting Scheduling Policy:</h3>
+<p>OpenMP scheduling policies can be set from the config file as well.
+Available scheduling policies to be set are: {"static", "auto",
+"dynamic", "guided"}.</p>
+<h3 id="setting-chunk-size">Setting Chunk Size:</h3>
+<p>One last parameter that can be set from the config file is chunk size.
+Its use is simply indicating an integer to determine the chunk size of
+the parallel environment.</p>
+<p>N_RUN parameter determines the number of times that your kernel is
+going to get repeated and N_IGNORE determines the first number of
+executions to be ignored. Every matrix kernel definition should
+allocate a separate line in the config file.</p>
+<h2 id="gpu_matrix_kernels">*GPU_MATRIX_KERNELS*</h2>
+<p>This section is for providing every GPU matrix kernel that will be
+executed on your ordered sparse matrices. The usage should be as
+follows:</p>
+<pre><code>[YOUR KERNEL NAME] | [YOUR GRID SIZE] | [YOUR BLOCK SIZES] | [YOUR N_RUN] | [YOUR N_IGNORE]
+</code></pre>
+<p>Because we have made matrix GPU kernel parallelization possible with
+Cuda, you are required to provide necessary Cuda arguments while
+launching your kernels. Currently, 2 arguments could be set from the
+config file to arrange your parallel environment, which are:</p>
+<h3 id="setting-grid-size">Setting Grid Size:</h3>
+<p>While launching Cuda kernels, 2 parameters are required to be set. One
+of them is the size of the grid which determines the number of blocks
+that it is going to include in it. Similar to the CPU Matrix Kernel
+thread count argument, the grid size parameter could be given as an
+array of grid sizes where each element is separated from one another
+with a delimiter of '/'.</p>
+<h3 id="setting-block-size">Setting Block Size:</h3>
+<p>The other argument that Cuda dictates to be set while launching GPU
+kernels is block sizes that determine the number of threads that will
+be working within each block. Similar to the CPU Matrix Kernel thread
+count argument, the block size parameter could be given as an array of
+block sizes where each element is separated from one another with a
+delimiter of '/'.</p>
+<p>One important thing to consider in the above 2 settings is that their
+length should be equal to each other -if they are given as an
+array-, as they will be zipped while processing.</p>
+<p>N_RUN and N_IGNORE are the same as their counterparts in CPU Matrix
+Kernels. Every GPU matrix kernel definition should allocate a separate
+line in the config file.</p>
+<h2 id="tensor_kernels">*TENSOR_KERNELS*</h2>
+<p>This section is for providing every CPU tensor kernel that will be
+executed on your ordered sparse matrices. The usage should be as
+follows:</p>
+<pre><code>[YOUR KERNEL NAME] | [YOUR THREAD COUNTS] | [YOUR SCHEDULING POLICY] | [YOUR CHUNK SIZE] | [YOUR N_RUN] | [YOUR N_IGNORE]
+</code></pre>
+<p>Because we have made tensor kernel parallelization possible with
+OpenMP, you are required to provide necessary OMP arguments while
+running your kernels. Currently, 3 arguments could be set from the
+config file to arrange your parallel environment, which are:</p>
+<h3 id="setting-thread-counts_1">Setting Thread Counts:</h3>
+<p>This is used for indicating the number of threads that will be working
+during your kernel's execution. If you want to test your kernels
+multiple times, with each of which having different thread counts
+working on, you can give an array of thread counts directly from
+within the config file by separating its elements with a delimiter of
+'/', like so: 1/2/4/8/16.</p>
+<h3 id="setting-scheduling-policy_1">Setting Scheduling Policy:</h3>
+<p>OpenMP scheduling policies can be set from the config file as well.
+Available scheduling policies to be set are: {"static", "auto",
+"dynamic", "guided"}.</p>
+<h3 id="setting-chunk-size_1">Setting Chunk Size:</h3>
+<p>One last parameter that can be set from the config file is chunk size.
+Its use is simply indicating an integer to determine the chunk size of
+the parallel environment.</p>
+<p>N_RUN parameter determines the number of times that your kernel is
+going to get repeated and N_IGNORE determines the first number of
+executions to be ignored. Every tensor kernel definition should
+allocate a separate line in the config file.</p>
+<h2 id="gpu_tensor_kernels">*GPU_TENSOR_KERNELS*</h2>
+<p>This section is for providing every GPU tensor kernel that will be
+executed on your ordered sparse matrices. The usage should be as
+follows:</p>
+<pre><code>[YOUR KERNEL NAME] | [YOUR GRID SIZE] | [YOUR BLOCK SIZES] | [YOUR N_RUN] | [YOUR N_IGNORE]
+</code></pre>
+<p>Because we have made tensor GPU kernel parallelization possible with
+Cuda, you are required to provide necessary Cuda arguments while
+launching your kernels. Currently, 2 arguments could be set from the
+config file to arrange your parallel environment, which are:</p>
+<h3 id="setting-grid-size_1">Setting Grid Size:</h3>
+<p>While launching Cuda kernels, 2 parameters are required to be set. One
+of them is the size of the grid which determines the number of blocks
+that it is going to include in it. Similar to the CPU Tensor Kernel
+thread count argument, the grid size parameter could be given as an
+array of grid sizes where each element is separated from one another
+with a delimiter of '/'.</p>
+<h3 id="setting-block-size_1">Setting Block Size:</h3>
+<p>The other argument that Cuda dictates to be set while launching GPU
+kernels is block sizes that determine the number of threads that will
+be working within each block. Similar to the CPU Tensor Kernel thread
+count argument, the block size parameter could be given as an array of
+block sizes where each element is separated from one another with a
+delimiter of '/'.</p>
+<p>One important thing to consider in the above 2 settings is that their
+length should be equal to each other -if they are given as an
+array-, as they will be zipped while processing.</p>
+<p>N_RUN and N_IGNORE are the same as their counterparts in CPU Matrix
+Kernels. Every GPU tensor kernel definition should allocate a separate
+line in the config file.</p>
+<h2 id="zoo-types">ZOO TYPES</h2>
+<p>One final remark that is left unmentioned related to the config file is
+what each ZOO_TYPE does. ZOO_TYPE determines the library's mode of
+running. As said previously, 5 zoo types could be used for now. Each one
+of them is explained as follows:</p>
+<h3 id="mat">"MAT"</h3>
+<p>MAT ZOO_TYPE enables the library to work with matrices. Its use requires
+the following config settings to be defined explicitly:</p>
+<p>MATRIX_FILES_DIR</p>
+<p>MATRIX_ORDERING_FILES_DIR</p>
+<p>MATRIX_VISUALIZATION_FILES_DIR</p>
+<p>While it would activate the matrix flow of the library, one feature that
+is separated from other matrices ZOO_TYPE is in its way of visualizing
+matrices.</p>
+<p>In the MAT ZOO_TYPE, separate html files are generated for every one of
+the matrices whose filename is mentioned under the *MATRICES* section.
+Orderings implemented on them will be visualized one under the other
+within the same file whose name is typically determined by the matrix
+name itself.</p>
+<h3 id="matord">"MATORD"</h3>
+<p>MATORD ZOO_TYPE enables the library to work with matrices as well. Its
+use requires the same config settings to be defined explicitly as MAT
+ZOO_TYPE:</p>
+<p>MATRIX_FILES_DIR</p>
+<p>MATRIX_ORDERING_FILES_DIR</p>
+<p>MATRIX_VISUALIZATION_FILES_DIR</p>
+<p>While it would activate the matrix flow of the library, one feature that
+it separated from the other available matrix-based ZOO_TYPE is its
+unique way of visualizing matrices.</p>
+<p>In the MATORD ZOO_TYPE, separate HTML files are generated for every one
+of the orderings whose properties are mentioned under the
+*MATRIX_ORDERINGS* section. Matrices on which the very same ordering
+is implemented are visualized one under the other within the same file
+whose name is typically determined by the name of the ordering itself.</p>
+<h3 id="tens">"TENS"</h3>
+<p>TENS ZOO_TYPE enables the library to work with tensors. Its use requires
+the following config settings to be defined explicitly:</p>
+<p>TENSOR_FILES_DIR</p>
+<p>TENSOR_ORDERING_FILES_DIR</p>
+<p>TENSOR_VISUALIZATION_FILES_DIR</p>
+<p>While it would activate the tensor flow of the library, one feature that
+is separated from other available tensor-based ZOO_TYPEs is in its way
+of visualizing tensors.</p>
+<p>In the TENS ZOO_TYPE, separate html files are generated for every one of
+the tensors whose filename is mentioned under the *TENSORS* section.
+Orderings implemented on them will be visualized one under the other
+within the same file whose name is typically determined by the tensor
+name itself.</p>
+<h3 id="tensord">"TENSORD"</h3>
+<p>TENSORD ZOO_TYPE enables the library to work with tensors as well. Its
+use requires the same config settings to be defined explicitly as TENS
+ZOO_TYPE:</p>
+<p>TENSOR_FILES_DIR</p>
+<p>TENSOR_ORDERING_FILES_DIR</p>
+<p>TENSOR_VISUALIZATION_FILES_DIR</p>
+<p>While it would activate the tensor flow of the library, one feature that
+it separated from the other available tensor-based ZOO_TYPEs is its
+unique way of visualizing matrices.</p>
+<p>In the TENSORD ZOO_TYPE, separate HTML files are generated for every one
+of the orderings whose properties are mentioned under the
+*TENSOR_ORDERINGS* section. Tensors on which the very same ordering is
+implemented are visualized one under the other within the same file
+whose name is typically determined by the name of the ordering itself.</p>
+<h3 id="fulltensor">"FULLTENSOR"</h3>
+<p>[TO BE COMPLETED]</p>
+<p>Having set our config file up, we can run our library properly by
+executing the executable file of SparseViz with the only argument
+pointing to the absolute path of the config file we have built.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../addingMatrixOrdering/" class="btn btn-neutral float-right" title="Adding Matrix Ordering">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../addingMatrixOrdering/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

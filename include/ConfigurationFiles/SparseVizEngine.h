@@ -35,9 +35,6 @@
 #include "Bfs.h"
 #include "SequentialBfs.h"
 #include "SpmmRowBased.h"
-#include "Dijkstra.h"
-#include "Bellman_Ford.h"
-#include "Floyd_Warshall.h"
 // Tensor Kernels
 #include "TensorKernelFunction.h"
 #include "COOTensorKernel.h"
@@ -45,7 +42,6 @@
 #ifdef CUDA_ENABLED
 #include "GPUKernelResult.h"
 #include "MatrixGPUKernel.h"
-#include "JackardWeights.h"
 #include "TensorGPUKernel.h"
 #include "COOTensorGPUKernelAoS.h"
 #include "COOTensorGPUKernelSoA.h"

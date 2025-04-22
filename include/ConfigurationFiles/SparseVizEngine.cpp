@@ -4,6 +4,14 @@
 #include "SparseVizLogger.h"
 #include "SparseVizIO.h"
 
+// terrible workaround, should be fixed
+namespace std 
+{
+    void __throw_bad_array_new_length() 
+    {
+        throw std::bad_array_new_length();
+    }
+}
 
 SparseVizEngine::~SparseVizEngine()
 {
@@ -591,28 +599,12 @@ MatrixKernelFunction *SparseVizEngine::matrixKernelFactory(const std::string &ke
     {
         return new SPMMRowBased(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
     }
-    else if (kernelName == "Dijkstra")
-    {
-        return new Dijkstra(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
-    }
-    else if (kernelName == "Bellman_Ford")
-    {
-        return new Bellman_Ford(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
-    }
-    else if (kernelName == "Floyd_Warshall")
-    {
-        return new Floyd_Warshall(kernelName, threadCounts, schedulingPolicy, chunkSize, nRun, nIgnore);
-    }
     return nullptr;
 }
 
 #ifdef CUDA_ENABLED
 MatrixGPUKernel *SparseVizEngine::matrixGPUKernelFactory(const std::string& kernelClassName, const std::string& kernelName, const std::vector<int>& gridSizes, const std::vector<int>& blockSizes, const std::vector<int>& sharedMemorySizes, const std::string& kernelParameters, int nRun, int nIgnore)
 {
-    if (kernelClassName == "JackardWeights")
-    {
-        return new JackardWeights(kernelName, gridSizes, blockSizes, sharedMemorySizes, kernelParameters, nRun, nIgnore);
-    }
     return nullptr;
 }
 #endif

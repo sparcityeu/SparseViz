@@ -5,7 +5,6 @@
 #include "SparseMatrix.h"
 #include <stdexcept>
 #include "omp.h"
-#include "SparseVizTest.h"
 
 
 int main(int argc, char* argv[])
@@ -23,31 +22,9 @@ int main(int argc, char* argv[])
     omp_set_num_threads(omp_get_max_threads());
 
     std::string arg1 = argv[1];
-    if (arg1 == "test")
-    {
-#ifndef TEST
-        {
-            throw std::runtime_error("You are trying to run the tester program without TEST macro defined in the source code. Either provide executable the -DTEST argument or add the TEST macro into the config.h file.");
-        }
-#endif
-        unsigned testNo;
-        try
-        {
-            testNo = std::stoul(argv[2]);
-        }
-        catch (const std::invalid_argument& e)
-        {
-            throw std::runtime_error("You have indicated an invalid argument for the number of tests to be conducted.");
-        }
-        SparseVizTest* tester =  SparseVizTest::getSparseVizTester();
-        tester->runTests(testNo);
-    }
-    else
-    {
-        ConfigFileReader reader(argv[1]);
-        SparseVizEngine* engine = reader.instantiateEngine();
-        engine->runEngine();
-    }
+    ConfigFileReader reader(argv[1]);
+    SparseVizEngine* engine = reader.instantiateEngine();
+    engine->runEngine();
 
     omp_destroy_lock(&(PatohOrdering::patoh_lock));
     omp_destroy_lock(&(COOKPartiteOrdering::kpartite_lock));

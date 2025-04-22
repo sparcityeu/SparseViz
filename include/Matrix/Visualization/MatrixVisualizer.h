@@ -1,22 +1,7 @@
 #ifndef SPARSEVIZ_MATRIXVISUALIZER_H
 #define SPARSEVIZ_MATRIXVISUALIZER_H
 
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <random>  // for std::default_random_engine
-#include <sstream>
-#include <vector>
-#include <string>
-#include "helpers.h"
-#include "json.hpp"
-#include "config.h"
 #include "MatrixOrdering.h"
-#include "SparseMatrix.h"
-#include "KernelResult.h"
-
 
 const int SORT_CALC_AVG_DIFF_DEBUG = 0;
 const bool EXPONENTIAL_COLORSCALE = false;
@@ -97,6 +82,5 @@ void visualizeMatrixOrderings(MatrixOrdering** orderings, int norder);
  * @param norder The total number of matrices to be visualized.
  */
 void visualizeMatrices(MatrixOrdering** orderings, int norder);
-
 
 #endif //SPARSEVIZ_MATRIXVISUALIZER_H

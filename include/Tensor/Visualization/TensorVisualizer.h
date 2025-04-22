@@ -1,17 +1,7 @@
-#include <sstream>
-#include <fstream>
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-#include <random> // for std::default_random_engine
-#include <chrono> // for seeding the random number generator
-#include <cassert>
-#include "json.hpp"
-#include "KernelResult.h"
+#ifndef SPARSEVIZ_TENSORVISUALIZER_H
+#define SPARSEVIZ_TENSORVISUALIZER_H
+
 #include "TensorOrdering.h"
-#include "helpers.h"
-#include "config.h"
 
 struct TStatistic
 {
@@ -80,3 +70,5 @@ void visualizeTensors(TensorOrdering** orderings, int norder);
  */
 void visualizeFullSparseTensor(TensorOrdering* ordering);
 double *sortAndCalculateAverageDifference3D(vType *coords, vType nnz);
+
+#endif // SPARSEVIZ_TENSORVISUALIZER_H

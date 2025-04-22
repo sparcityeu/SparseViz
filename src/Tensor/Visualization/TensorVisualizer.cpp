@@ -1,3 +1,4 @@
+#include "TensorVisualizer.h"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -7,11 +8,17 @@
 #include <random> // for std::default_random_engine
 #include <chrono> // for seeding the random number generator
 #include <cassert>
+#include <cstring>
+#include <string>
+#include <ostream>
+#include <istream>
+#include <random>
 #include <omp.h>
-#include "TensorVisualizer.h"
-#include "SparseVizLogger.h"
-#include "SparseVizTest.h"
+#include "helpers.h"
+#include "config.h"
+#include "json.hpp"
 #include "SparseTensorCOO.h"
+#include "KernelResult.h"
 
 using namespace std;
 
@@ -387,12 +394,7 @@ void visualizeTensorOrderings(TensorOrdering** orderings, int norder) {
     //std::cout << "Single NNZ Fiber Counts " <<  singleNNZfiberCounts[0] << " " <<  singleNNZfiberCounts[1] << " " <<  singleNNZfiberCounts[2] << std::endl;
 
     std::string filePath;
-
-#ifdef TEST
-    filePath = SparseVizTest::getSparseVizTester()->getCurrentDirectory() + filename + ".html";
-#else
     filePath = TENSOR_VISUALIZATION_FILES_DIR + filename + ".html";
-#endif
 
     std::ofstream html_file(filePath);
     html_file << R"(
@@ -1280,12 +1282,7 @@ void visualizeTensors(TensorOrdering** orderings, int norder) {
 }
 
     std::string filePath;
-
-#ifdef TEST
-    filePath = SparseVizTest::getSparseVizTester()->getCurrentDirectory() + filename + ".html";
-#else
     filePath = TENSOR_VISUALIZATION_FILES_DIR + filename + ".html";
-#endif
 
     std::ofstream html_file(filePath);
     html_file << R"(
@@ -2172,12 +2169,7 @@ void visualizeFullSparseTensor(TensorOrdering* ordering) {
 }
 
     std::string filePath;
-
-#ifdef TEST
-    filePath = SparseVizTest::getSparseVizTester()->getCurrentDirectory() + filename + ".html";
-#else
     filePath = TENSOR_VISUALIZATION_FILES_DIR + filename + ".html";
-#endif
 
     std::ofstream html_file(filePath);
     html_file << R"(

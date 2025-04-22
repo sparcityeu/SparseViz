@@ -279,7 +279,7 @@ void SparseMatrix::checkSymmetry(bool adj_sorted)
     }   
 }
 
-void SparseMatrix::printNonzeros(vType count) const
+void SparseMatrix::printMatrix(vType count) const
 {
     if (count > m_Row)
     {
@@ -287,13 +287,13 @@ void SparseMatrix::printNonzeros(vType count) const
     }
 
     std::cout << std::endl;
-    std::cout << "Printing the first " << count << " nonzeros of " << this->getName() << ':' << std::endl;
-    for (vType r = 1; r <= count; ++r)
+    for (vType i = 0; i < count; ++i)
     {
-        for (vType nnz = m_Ptr[r-1]; nnz != m_Ptr[r]; ++nnz)
+        for (vType ptr = m_Ptr[i]; ptr < m_Ptr[i + 1]; ++ptr)
         {
-            std::cout << r - 1 << ' ' << m_Ind[nnz] << ' ' << (double) m_Values[nnz] << std::endl;
+            std::cout << i << ' ' << m_Ind[ptr] << ' ' << m_Values[ptr] << ' ';
         }
+        std::cout << std::endl;
     }
     std::cout << std::endl;
 }

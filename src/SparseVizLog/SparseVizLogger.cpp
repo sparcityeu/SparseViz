@@ -7,7 +7,6 @@
 #include "MatrixVisualizer.h"
 #include <iomanip>
 #include "TensorVisualizer.h"
-#include "SparseVizTest.h"
 
 
 void SparseVizLogger::createCSVFile(const std::string& filePath)
@@ -921,9 +920,4 @@ bool SparseVizLogger::isCudaEnabled()
 #else
     return false;
 #endif
-}
-
-void SparseVizLogger::logTest(std::string line)
-{
-    SparseVizTest::getSparseVizTester()->logTest(line);
 }

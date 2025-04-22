@@ -45,9 +45,8 @@ ConfigFileReader::ConfigFileReader(const std::string& configFile)
 ConfigFileReader::~ConfigFileReader()
 {
     m_File.close();
-#ifndef TEST
     logger->createCSVFile(PROJECT_DIR + m_LogFilePath);
-#endif
+    
     delete m_Engine;
     delete sparseVizPerformance;
     delete logger;

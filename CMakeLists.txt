@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(SparseViz)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_TYPE Debug)
+# C++ Standard
+set(CMAKE_CXX_STANDARD 17)
 
 # OpenMP
 find_package(OpenMP REQUIRED)
@@ -13,28 +13,23 @@ if(OpenMP_FOUND)
 endif()
 
 # Cuda
-include(CheckLanguage)
-check_language(CUDA)
-if(CMAKE_CUDA_COMPILER)
+find_package(CUDAToolkit QUIET)
+if(CUDAToolkit_FOUND)
+    set(CMAKE_CUDA_ARCHITECTURES 52 60 70 75 80 90)
     enable_language(CUDA)
     add_definitions(-DCUDA_ENABLED)
-#    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -G -lineinfo")
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler ${OpenMP_CXX_FLAGS}")
-    find_package(CUDAToolkit REQUIRED)
 endif()
 
 # MPI
-check_language(MPI)
+find_package(MPI QUIET)
 if(MPI_FOUND)
-    find_package(MPI REQUIRED)
-    add_definitions(-DMPI_AVAILABLE)
+    add_definitions(-DMPI_ENABLED)
     include_directories(${MPI_INCLUDE_PATH})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
 endif()
 
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-
+# Directories
 include_directories(lib)
 include_directories(include)
 include_directories(include/ConfigurationFiles)
@@ -53,7 +48,6 @@ include_directories(include/Kernel/Matrix/GPU)
 include_directories(include/Kernel/Tensor)
 include_directories(include/Kernel/Tensor/CPU)
 include_directories(include/Kernel/Tensor/GPU)
-include_directories(include/SparseVizTest)
 include_directories(include/SparseVizLog)
 include_directories(include/SparseVizPerformance)
 include_directories(include/IO)
@@ -73,15 +67,14 @@ include_directories(src/Kernel/Matrix/GPU)
 include_directories(src/Kernel/Tensor)
 include_directories(src/Kernel/Tensor/CPU)
 include_directories(src/Kernel/Tensor/GPU)
-include_directories(src/SparseVizTest)
 include_directories(src/SparseVizLog)
 include_directories(src/SparseVizPerformance)
 include_directories(src/IO)
 include_directories(MatrixVisualizationFiles)
 include_directories(TensorVisualizationFiles)
-include_directories(TestFiles)
 
-set(HEADER_FILES
+# Common Files
+set(COMMON_HEADER_FILES
         include/ConfigurationFiles/config.h
         include/ConfigurationFiles/SparseVizEngine.h
         include/Matrix/Orderings/TrivialOrdering.h
@@ -117,16 +110,12 @@ set(HEADER_FILES
         include/Kernel/Matrix/CPU/SequentialBfs.h
         include/SparseVizLog/SparseVizLogger.h
         include/IO/SparseVizIO.h
-        include/Kernel/Matrix/CPU/Dijkstra.h
-        include/Kernel/Matrix/CPU/Bellman_Ford.h
-        include/Kernel/Matrix/CPU/Floyd_Warshall.h
-        include/SparseVizTest/SparseVizTest.h
         include/SparseVizPerformance/SparseVizPerformance.h
         include/Tensor/Base/SparseTensorCOO.h
         include/sort.h
 )
 
-set(SOURCE_FILES
+set(COMMON_SOURCE_FILES
         src/main.cpp
         include/ConfigurationFiles/config.cpp
         include/ConfigurationFiles/SparseVizEngine.cpp
@@ -160,68 +149,103 @@ set(SOURCE_FILES
         src/Kernel/Matrix/CPU/SequentialBfs.cpp
         src/SparseVizLog/SparseVizLogger.cpp
         src/IO/SparseVizIO.cpp
-        src/Kernel/Matrix/CPU/Dijkstra.cpp
-        src/Kernel/Matrix/CPU/Bellman_Ford.cpp
-        src/Kernel/Matrix/CPU/Floyd_Warshall.cpp
-        src/SparseVizTest/SparseVizTest.cpp
         src/SparseVizPerformance/SparseVizPerformance.cpp
         src/Tensor/Base/SparseTensorCOO.cpp
         src/sort.cpp
 )
 
-file(READ "/home/delbek/sparseviz/deniz_matrix_config" configContent)
+# Rabbit Files
+set(RABBIT_HEADER_FILES
+        include/Matrix/Orderings/rabbit_order.hpp
+        include/Matrix/Orderings/RabbitOrdering.h
+)
+
+set(RABBIT_SOURCE_FILES
+        src/Matrix/Orderings/RabbitOrdering.cpp
+)
+
+# GPU Files
+set(GPU_HEADER_FILES
+        include/GPUHelpers.h
+        include/Kernel/GPUKernelResult.h
+        include/Kernel/Matrix/GPU/MatrixGPUKernel.h
+        include/Kernel/Tensor/GPU/TensorGPUKernel.h
+        include/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.h
+        include/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.h
+)
+
+set(GPU_SOURCE_FILES
+        src/Kernel/GPUHelpers.cu
+        src/Kernel/Matrix/GPU/MatrixGPUKernel.cu
+        src/Kernel/Tensor/GPU/TensorGPUKernel.cu
+        src/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.cu
+        src/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.cu
+)
+
+# MPI Files
+set(MPI_HEADER_FILES
+
+)
+
+set(MPI_SOURCE_FILES
+
+)
+
+# All Files
+set(FILES
+        ${COMMON_HEADER_FILES}
+        ${COMMON_SOURCE_FILES}
+)
+
+# Add Rabbit Files to All Files if Rabbit License is found
+file(READ "[YOUR CONFIG FILE ABSOLUTE PATH]" configContent)
 string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
 set(rabbitLicence ${CMAKE_MATCH_1})
 string(STRIP ${rabbitLicence} rabbitLicence)
 
 if (NOT rabbitLicence STREQUAL "None")
     add_definitions(-DRABBIT_AVAILABLE)
-    list(APPEND HEADER_FILES include/Matrix/Orderings/rabbit_order.hpp)
-    list(APPEND HEADER_FILES include/Matrix/Orderings/RabbitOrdering.h)
-    list(APPEND SOURCE_FILES src/Matrix/Orderings/RabbitOrdering.cpp)
+    list(APPEND FILES ${RABBIT_HEADER_FILES})
+    list(APPEND FILES ${RABBIT_SOURCE_FILES})
 endif()
 
-if(CMAKE_CUDA_COMPILER)
-    list(APPEND HEADER_FILES include/Kernel/GPUHelpers.h)
-    list(APPEND HEADER_FILES include/Kernel/GPUKernelResult.h)
-    list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/MatrixGPUKernel.h)
-    list(APPEND HEADER_FILES include/Kernel/Matrix/GPU/JackardWeights.h)
-    list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/TensorGPUKernel.h)
-    list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.h)
-    list(APPEND HEADER_FILES include/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.h)
-    list(APPEND SOURCE_FILES src/Kernel/GPUHelpers.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/MatrixGPUKernel.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Matrix/GPU/JackardWeights.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/TensorGPUKernel.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.cu)
-    list(APPEND SOURCE_FILES src/Kernel/Tensor/GPU/COOTensorGPUKernelSoA.cu)
+# Add GPU Files to All Files if CUDA is found
+if(CUDAToolkit_FOUND)
+    list(APPEND FILES ${GPU_HEADER_FILES})
+    list(APPEND FILES ${GPU_SOURCE_FILES})
 endif()
 
+# Add MPI Files to All Files if MPI is found
 if(MPI_FOUND)
-
+    list(APPEND FILES ${MPI_HEADER_FILES})
+    list(APPEND FILES ${MPI_SOURCE_FILES})
 endif()
 
+# Create executable
 add_executable(SparseViz
-        ${SOURCE_FILES}
-        README.md
+        ${FILES}
 )
 
-target_link_libraries(SparseViz
-        OpenMP::OpenMP_CXX
-        cuda
-        ${CUDA_LIBRARIES}
-        ${CUDA_CUBLAS_LIBRARIES}
-        ${CUDA_cusparse_LIBRARY}
+# Force CMake to use the C++ linker driver
+set_target_properties(SparseViz PROPERTIES
+    LINKER_LANGUAGE CXX
 )
 
-if(MPI_FOUND)
-    target_link_libraries(SparseViz
-            MPI::MPI_CXX
-    )
-endif()
+# Link libraries
+target_link_libraries(SparseViz PRIVATE
+    # [YOUR PATOH BINARY ABSOLUTE PATH]
+    # [YOUR AMD BINARY ABSOLUTE PATH]
+    numa
+    OpenMP::OpenMP_CXX
+    $<$<BOOL:${MPI_FOUND}>:MPI::MPI_CXX>
+    $<$<BOOL:${CUDAToolkit_FOUND}>:cuda>
+    $<$<BOOL:${CUDAToolkit_FOUND}>:CUDA::cudart>
+    $<$<BOOL:${CUDAToolkit_FOUND}>:${CUDA_LIBRARIES}>
+)
 
-target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libpatoh.a)
-target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libamd.a)
-#target_link_libraries(SparseViz libnuma.a)
-
+# Options
 target_compile_options(SparseViz PRIVATE -O3)
+target_compile_options(SparseViz PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
+        -O3
+        --generate-line-info
+        >)

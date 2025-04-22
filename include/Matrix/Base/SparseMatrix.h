@@ -97,10 +97,10 @@ public:
     ~SparseMatrix();
 
     /*!
-     * @brief Prints the first count nonzeros sorted in the row major order.
-     * @count Number of nonzeros to be printed, if bigger than row count then it prints the whole matrix in row major order.
+     * @brief Prints the first count rows into the terminal.
+     * @count Number of rows to be printed, if bigger than row count then it prints the whole matrix.
      */
-    void printNonzeros(vType count) const;
+    void printMatrix(vType count) const;
 
     /*!
      * @brief Transposes the matrix itself. CSR to CSC OR CSC to CSR.

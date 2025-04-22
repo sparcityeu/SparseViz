@@ -1,7 +1,24 @@
 #include "MatrixVisualizer.h"
 #include <sstream>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <random> // for std::default_random_engine
+#include <chrono> // for seeding the random number generator
+#include <cassert>
 #include <cstring>
-#include "SparseVizTest.h"
+#include <string>
+#include <ostream>
+#include <istream>
+#include <random>
+#include <omp.h>
+#include "helpers.h"
+#include "config.h"
+#include "json.hpp"
+#include "SparseMatrix.h"
+#include "KernelResult.h"
 
 std::string stat_to_html_table(const MatrixOrdering &o, const Statistic &stat)
 {
@@ -453,12 +470,7 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
     }
 
     std::string filePath;
-
-#ifdef TEST
-    filePath = SparseVizTest::getSparseVizTester()->getCurrentDirectory() + filename + ".html";
-#else
     filePath = MATRIX_VISUALIZATION_FILES_DIR + filename + ".html";
-#endif
 
     std::ofstream html_file(filePath);
     html_file << R"(
@@ -1319,12 +1331,7 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
     }
 
     std::string filePath;
-
-#ifdef TEST
-    filePath = SparseVizTest::getSparseVizTester()->getCurrentDirectory() + filename + ".html";
-#else
     filePath = MATRIX_VISUALIZATION_FILES_DIR + filename + ".html";
-#endif
 
     std::ofstream html_file(filePath);
     html_file << R"(

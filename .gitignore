@@ -7,3 +7,4 @@ bin/
 lib/
 *.config
 .vscode/
+rabbit_order.hpp

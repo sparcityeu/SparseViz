@@ -25,7 +25,6 @@ K add new RCM-jaccard sparsification
 K add METIS orderings (similar to PATOH with inner)
 K active modes is not vType - simple int
 K use bipartite graphs for rectangular, unsymmetric matrices in addition (or inplace of A+A')
-D .ord extension for plaintext (external) ordering
 K Extract features, kernel specific shap (Explainability) analysis and visualization
 
 

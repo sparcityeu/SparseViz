@@ -80,6 +80,7 @@ include_directories(TensorVisualizationFiles)
 # Common Files
 set(COMMON_HEADER_FILES
         include/ConfigurationFiles/config.h
+        include/ConfigurationFiles/SuiteSparseMatrixDownloader.hpp
         include/ConfigurationFiles/SparseVizEngine.h
         include/Matrix/Orderings/TrivialOrdering.h
         include/Matrix/Orderings/MatrixOrdering.h

@@ -26,6 +26,9 @@
 #include "MinDegOrdering.h"
 #include "TensorNaturalOrdering.h"
 #include "COOKPartiteOrdering.h"
+#include "MillerPritikin.h"
+#include "LevelBasedSweep.h"
+#include "FileOrdering.h"
 #ifdef RABBIT_AVAILABLE
 #include "RabbitOrdering.h"
 #endif

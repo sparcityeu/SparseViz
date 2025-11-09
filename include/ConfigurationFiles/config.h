@@ -30,7 +30,6 @@ extern SparseVizLogger* logger;    //!< Logger that is used for logging purposes
 extern SparseVizPerformance* sparseVizPerformance;
 extern bool TIMING_LOG;    //!< Indicates whether or not timing should be logged into terminal | Default = true.
 extern std::string PROJECT_DIR;    //!< The path of the root project directory.
-extern double MAX_TIME_BEFORE_ABORTING_ORDERING;    //!< Maximum time dedicated to orderings before they are forcefully aborted | Default = 1000.
 extern bool EXPORT_ORDERED_SPARSE_STRUCTURES;    //!< Indicates whether or not sparse structures that have been ordered should be written to binary files | Default = true.
 extern bool USE_EXISTING_ORDERED_SPARSE_STRUCTURES;    //!< Indicates whether or not sparse structures that had been ordered and that have been written to binary files are allowed to be read | Default = true.
 extern bool EXPORT_ORDERINGS;    //!< Indicates whether or not orderings made should be written to binary files | Default = true.

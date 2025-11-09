@@ -675,6 +675,18 @@ MatrixOrdering *SparseVizEngine::matrixOrderingFactory(SparseMatrix& matrix, std
     {
         return new AMDOrdering(matrix, orderingName);
     }
+    else if (orderingClassName == "MillerPritikin")
+    {
+        return new MillerPritikin(matrix, orderingName);
+    }
+    else if (orderingClassName == "LevelBasedSweep")
+    {
+        return new LevelBasedSweep(matrix, orderingName);
+    }
+    else if (orderingClassName == "FileOrdering")
+    {
+        return new FileOrdering(matrix, orderingName, orderingParameters);
+    }
 #ifdef RABBIT_AVAILABLE
     else if (orderingClassName == "Rabbit")
     {

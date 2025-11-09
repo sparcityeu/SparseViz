@@ -1,13 +1,12 @@
 #include "config.h"
 #include "helpers.h"
 #include "SparseVizEngine.h"
-
+#include "SuiteSparseMatrixDownloader.hpp"
 
 SparseVizLogger* logger = new SparseVizLogger;
 SparseVizPerformance* sparseVizPerformance = new SparseVizPerformance;
 bool TIMING_LOG = true;
 std::string PROJECT_DIR = "-1";
-double MAX_TIME_BEFORE_ABORTING_ORDERING = 1000;
 bool EXPORT_ORDERED_SPARSE_STRUCTURES = true;
 bool USE_EXISTING_ORDERED_SPARSE_STRUCTURES = true;
 bool EXPORT_ORDERINGS = true;
@@ -29,7 +28,6 @@ TensorType TENSOR_STORAGE_TYPE;
 BlockType BLOCK_SIZE;
 bool ORDERING_PERFORMANCE_LOG = false;
 bool KERNEL_PERFORMANCE_LOG = false;
-
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
 :   m_Engine(nullptr)
@@ -178,6 +176,31 @@ void ConfigFileReader::readConfigFile()
             }
         }
     }
+
+    SuiteSparseDownloader downloader;
+    SuiteSparseDownloader::MatrixFilter filter;
+    auto& names = filter.names.emplace();
+    for (const auto& readMatrix: m_Matrices)
+    {
+        auto splitted = split(readMatrix, '.');
+        names.emplace_back(split(splitted[splitted.size() - 2], '/').back());
+    }
+    std::vector<SuiteSparseDownloader::MatrixInfo> matrices = downloader.getMatrices(filter);
+    downloader.downloadMatrices(MATRIX_FILES_DIR, matrices);
+
+    m_Matrices.clear();
+    for (const auto& downloadedMatrix: matrices)
+    {
+        if (!downloadedMatrix.isValid)
+        {
+            std::cout << "Matrix download for matrix: " << downloadedMatrix.name << " has failed." << std::endl;
+        }
+        else
+        {
+            m_Matrices.emplace_back(downloadedMatrix.installationPath);
+        }
+    }
+
     this->validateConfigStatus();
 }
 
@@ -258,17 +281,6 @@ void ConfigFileReader::readSetting(const std::string& line)
     else if (lineSplitted[0] == "PROJECT_DIR")
     {
         PROJECT_DIR = lineSplitted[1];
-    }
-    else if (lineSplitted[0] == "MAX_TIME_BEFORE_ABORTING_ORDERING")
-    {
-        try
-        {
-            MAX_TIME_BEFORE_ABORTING_ORDERING = std::stoi(lineSplitted[1]);
-        }
-        catch (const std::invalid_argument &e)
-        {
-            throw std::runtime_error("Invalid format for MAX_TIME_BEFORE_ABORTING_ORDERING");
-        }
     }
     else if (lineSplitted[0] == "MATRIX_FILES_DIR")
     {

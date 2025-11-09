@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(SparseViz)
 
 # C++ Standard
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 
 # OpenMP
@@ -15,7 +16,7 @@ endif()
 # Cuda
 find_package(CUDAToolkit QUIET)
 if(CUDAToolkit_FOUND)
-    set(CMAKE_CUDA_ARCHITECTURES 52 60 70 75 80 90)
+    set(CMAKE_CUDA_ARCHITECTURES 70)
     enable_language(CUDA)
     add_definitions(-DCUDA_ENABLED)
 endif()
@@ -28,6 +29,9 @@ if(MPI_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
 endif()
+
+# CURL
+find_package(CURL REQUIRED)
 
 # Directories
 include_directories(lib)
@@ -92,6 +96,10 @@ set(COMMON_HEADER_FILES
         include/Matrix/Orderings/PatohOrdering.h
         include/Matrix/Orderings/DynaDegOrdering.h
         include/Matrix/Orderings/MinDegOrdering.h
+        include/Matrix/Orderings/OrderingHelpers.h
+        include/Matrix/Orderings/MillerPritikin.h
+        include/Matrix/Orderings/LevelBasedSweep.h
+        include/Matrix/Orderings/FileOrdering.h
         include/Matrix/Orderings/amd.h
         include/Matrix/Orderings/AMDOrdering.h
         include/Tensor/Base/SparseTensor.h
@@ -135,6 +143,10 @@ set(COMMON_SOURCE_FILES
         src/Matrix/Orderings/DynaDegOrdering.cpp
         src/Matrix/Orderings/MinDegOrdering.cpp
         src/Matrix/Orderings/AMDOrdering.cpp
+        src/Matrix/Orderings/OrderingHelpers.cpp
+        src/Matrix/Orderings/MillerPritikin.cpp
+        src/Matrix/Orderings/LevelBasedSweep.cpp
+        src/Matrix/Orderings/FileOrdering.cpp
         src/Tensor/Base/SparseTensor.cpp
         src/Tensor/Orderings/TensorOrdering.cpp
         src/Tensor/Orderings/TensorNaturalOrdering.cpp
@@ -175,7 +187,6 @@ set(GPU_HEADER_FILES
 )
 
 set(GPU_SOURCE_FILES
-        src/Kernel/GPUHelpers.cu
         src/Kernel/Matrix/GPU/MatrixGPUKernel.cu
         src/Kernel/Tensor/GPU/TensorGPUKernel.cu
         src/Kernel/Tensor/GPU/COOTensorGPUKernelAoS.cu
@@ -198,7 +209,7 @@ set(FILES
 )
 
 # Add Rabbit Files to All Files if Rabbit License is found
-file(READ "[YOUR CONFIG FILE ABSOLUTE PATH]" configContent)
+file(READ "/home/delbek/sparseviz/deniz_matrix.config" configContent)
 string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
 set(rabbitLicence ${CMAKE_MATCH_1})
 string(STRIP ${rabbitLicence} rabbitLicence)
@@ -233,8 +244,10 @@ set_target_properties(SparseViz PROPERTIES
 
 # Link libraries
 target_link_libraries(SparseViz PRIVATE
-    # [YOUR PATOH BINARY ABSOLUTE PATH]
-    # [YOUR AMD BINARY ABSOLUTE PATH]
+    CURL::libcurl
+    stdc++
+    /home/delbek/sparseviz/lib/libpatoh.a
+    /home/delbek/sparseviz/lib/libamd.a
     numa
     OpenMP::OpenMP_CXX
     $<$<BOOL:${MPI_FOUND}>:MPI::MPI_CXX>
@@ -244,8 +257,7 @@ target_link_libraries(SparseViz PRIVATE
 )
 
 # Options
-target_compile_options(SparseViz PRIVATE -O3)
-target_compile_options(SparseViz PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:
-        -O3
-        --generate-line-info
-        >)
+target_compile_options(SparseViz PRIVATE
+    $<$<COMPILE_LANGUAGE:CXX>:-O3 -g -std=c++17>
+    $<$<COMPILE_LANGUAGE:CUDA>:-O3 --generate-line-info --std=c++17>
+)

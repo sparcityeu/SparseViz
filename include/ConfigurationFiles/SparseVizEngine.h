@@ -26,6 +26,17 @@
 #include "MinDegOrdering.h"
 #include "TensorNaturalOrdering.h"
 #include "COOKPartiteOrdering.h"
+
+//grkmshn
+#include "GPSOrdering.h"
+#include "LouvainOrdering.h"
+#include "VNSBandOrdering.h"
+#include "RBFS-GLOrdering.h"
+#include "SloanOrdering.h"
+#include "Sloan-MGPSOrdering.h"
+#include "SpectralOrdering.h"
+#include "RCMPPOrdering.h"
+#include "DRSAOrdering.h"
 #ifdef RABBIT_AVAILABLE
 #include "RabbitOrdering.h"
 #endif

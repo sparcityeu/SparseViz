@@ -683,6 +683,41 @@ MatrixOrdering *SparseVizEngine::matrixOrderingFactory(SparseMatrix& matrix, std
     {
         return new AMDOrdering(matrix, orderingName);
     }
+    //made by grkmshn
+    else if (orderingClassName == "GPS")
+    {
+        return new GPSOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "VNSBand")
+    {
+        return new VNSBandOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "RBFS-GL")
+    {
+        return new RBFSGLOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "Sloan")
+    {
+        return new SloanOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "SloanMGPS")
+    {
+        return new MGPSSloanOrdering(matrix, orderingName, orderingParameters);
+    }
+
+    else if (orderingClassName == "SpectralOrdering") {
+        return new SpectralOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "RCMPP")
+    {
+        return new RCMPPOrdering(matrix, orderingName, orderingParameters);
+    }
+    else if (orderingClassName == "DRSA")
+    {
+        return new DRSAOrdering(matrix, orderingName, orderingParameters);
+    }
+
+
 #ifdef RABBIT_AVAILABLE
     else if (orderingClassName == "Rabbit")
     {

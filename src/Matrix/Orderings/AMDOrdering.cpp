@@ -2,7 +2,9 @@
 #include "Parameters.h"
 #include <vector>
 #include <algorithm>
-#include <amd.h>
+extern "C" {
+#include "amd.h"
+}
 
 
 void AMDOrdering::orderingFunction()

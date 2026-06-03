@@ -124,6 +124,14 @@ set(HEADER_FILES
         include/SparseVizPerformance/SparseVizPerformance.h
         include/Tensor/Base/SparseTensorCOO.h
         include/sort.h
+        include/Matrix/Orderings/GPSOrdering.h
+        include/Matrix/Orderings/RBFS-GLOrdering.h
+        include/Matrix/Orderings/SloanOrdering.h
+        include/Matrix/Orderings/Sloan-MGPSOrdering.h
+        include/Matrix/Orderings/VNSBandOrdering.h
+        include/Matrix/Orderings/DRSAOrdering.h
+        include/Matrix/Orderings/RCMPPOrdering.h
+        include/Matrix/Orderings/SpectralOrdering.h
 )
 
 set(SOURCE_FILES
@@ -167,6 +175,16 @@ set(SOURCE_FILES
         src/SparseVizPerformance/SparseVizPerformance.cpp
         src/Tensor/Base/SparseTensorCOO.cpp
         src/sort.cpp
+        src/Matrix/Orderings/GPSOrderingV2.cpp
+        src/Matrix/Orderings/GPSOrderingV3AGENTIC.cpp
+        src/Matrix/Orderings/RBFS-GLOrderingV2.cpp
+        src/Matrix/Orderings/SloanOrderingV2.cpp
+        src/Matrix/Orderings/Sloan-MGPSOrderingV2.cpp
+        src/Matrix/Orderings/VNSBandOrderingV3.cpp
+        src/Matrix/Orderings/VNSBandOrderingV3+RCM.cpp
+        src/Matrix/Orderings/DRSAOrdering.cpp
+        src/Matrix/Orderings/RCMPPOrdering.cpp
+        src/Matrix/Orderings/SpectralOrdering.cpp
 )
 
 file(READ " -- YOUR CONFIG FILE TO GET PROJECT INFO -- " configContent)
@@ -219,8 +237,9 @@ if(MPI_FOUND)
     )
 endif()
 
-target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libpatoh.a)
-target_link_libraries(SparseViz /home/delbek/sparseviz/lib/libamd.a)
+set(THIRD_PARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/lib")
+target_link_libraries(SparseViz "${THIRD_PARTY_LIB_DIR}/libpatoh.a")
+target_link_libraries(SparseViz "${THIRD_PARTY_LIB_DIR}/libamd.a")
 #target_link_libraries(SparseViz libnuma.a)
 
 target_compile_options(SparseViz PRIVATE -O3)

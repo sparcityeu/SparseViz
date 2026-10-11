@@ -3,6 +3,7 @@ site_url: https://sparcityeu.github.io/sparseviz/
 nav:
   - Home: index.md
   - Config File: configUse.md
+  - Interactive Guide: guide/index.html
   - EXTENDING LIBRARY BEYOND:
       - Adding Matrix Ordering: addingMatrixOrdering.md
       - Adding Tensor Ordering: addingTensorOrdering.md

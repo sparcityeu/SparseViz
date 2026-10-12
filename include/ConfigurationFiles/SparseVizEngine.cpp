@@ -3,6 +3,7 @@
 #include "TensorVisualizer.h"
 #include "SparseVizLogger.h"
 #include "SparseVizIO.h"
+#include "MatrixFeatureExtractor.h"
 
 // terrible workaround, should be fixed
 namespace std 
@@ -53,6 +54,7 @@ void SparseVizEngine::runEngine()
         // Orderings are listed for each matrix.
 
         std::unordered_map<std::string, std::vector<MatrixOrdering*>> matrixOrderingPermutations = this->getMatrixOrderingPermutations();
+        this->runMatrixFeatureExtraction();
         this->runMatrixKernels();
 #ifdef CUDA_ENABLED
         this->runGPUMatrixKernels();
@@ -70,6 +72,7 @@ void SparseVizEngine::runEngine()
         // Matrices are listed for each ordering.
 
         std::unordered_map<std::string, std::vector<MatrixOrdering*>> matrixPermutations = this->getMatrixPermutations();
+        this->runMatrixFeatureExtraction();
         this->runMatrixKernels();
 #ifdef CUDA_ENABLED
         this->runGPUMatrixKernels();
@@ -487,6 +490,42 @@ void SparseVizEngine::runGPUTensorKernels()
     }
 }
 #endif
+
+void SparseVizEngine::runMatrixFeatureExtraction()
+{
+    if (!FEATURE_EXTRACTION)
+    {
+        return;
+    }
+
+    // features are computed on the ordered matrix, same as runMatrixKernels does
+#pragma omp parallel for schedule(dynamic,1)
+    for (int i = 0; i < m_MatrixOrderings.size(); ++i)
+    {
+        MatrixOrdering* orderingPtr = m_MatrixOrderings[i];
+        double start_time = omp_get_wtime();
+
+        NaturalOrdering* naturalOrderingPtr = dynamic_cast<NaturalOrdering*>(orderingPtr);
+        SparseMatrix* matrixConstructed = nullptr;
+        if (naturalOrderingPtr == nullptr)
+        {
+            if (USE_EXISTING_ORDERED_SPARSE_STRUCTURES)
+            {
+                matrixConstructed = SparseVizIO::readOrderedMatrixFromBinaryFile(orderingPtr->getOrderingName(), orderingPtr->getMatrix().getName());
+            }
+            if (matrixConstructed == nullptr)
+            {
+                matrixConstructed = this->constructOrderedMatrix(orderingPtr);
+            }
+        }
+        const SparseMatrix& target = (naturalOrderingPtr != nullptr) ? orderingPtr->getMatrix() : *matrixConstructed;
+
+        MatrixFeatures features = MatrixFeatureExtractor::extract(target);
+        logger->logMatrixFeatures(orderingPtr->getMatrix().getName(), orderingPtr->getOrderingName(), features, omp_get_wtime() - start_time);
+
+        delete matrixConstructed;
+    }
+}
 
 SparseMatrix* SparseVizEngine::constructOrderedMatrix(MatrixOrdering* ordering)
 {

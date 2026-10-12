@@ -1,4 +1,5 @@
 #include "SparseVizLogger.h"
+#include "MatrixFeatureExtractor.h"
 #include "SparseMatrix.h"
 #include "MatrixOrdering.h"
 #include "SparseTensor.h"
@@ -416,6 +417,17 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         for (const auto& processing: m_MatrixProcessing)
         {
             csvFile << processing << '\n';
+        }
+        csvFile << '\n';
+    }
+
+    if (!m_MatrixFeatures.empty())
+    {
+        csvFile << "Operation: Matrix Features\n";
+        csvFile << "Matrix Name\tOrdering Name\tDuration\t" << m_MatrixFeaturesHeader << '\n';
+        for (const auto& line: m_MatrixFeatures)
+        {
+            csvFile << line << '\n';
         }
         csvFile << '\n';
     }
@@ -911,6 +923,22 @@ bool SparseVizLogger::isOMPEnabled()
 #else
     return false;
 #endif
+}
+
+void SparseVizLogger::logMatrixFeatures(const std::string& matrixName, const std::string& orderingName, const MatrixFeatures& features, double duration)
+{
+#pragma omp critical
+    {
+        if (m_MatrixFeaturesHeader.empty())
+        {
+            m_MatrixFeaturesHeader = MatrixFeatureExtractor::header(features);
+        }
+        m_MatrixFeatures.push_back(matrixName + '\t' + orderingName + '\t' + std::to_string(duration) + '\t' + MatrixFeatureExtractor::row(features));
+        if (TIMING_LOG)
+        {
+            std::cout << "Features of " << matrixName << " under " << orderingName << " have been extracted in " << duration << " seconds." << std::endl;
+        }
+    }
 }
 
 bool SparseVizLogger::isCudaEnabled()

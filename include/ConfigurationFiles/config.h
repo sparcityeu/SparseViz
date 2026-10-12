@@ -49,6 +49,7 @@ extern std::string TEST_CONFIG;
 extern std::string TEST_DIRECTORY;
 extern bool ORDERING_PERFORMANCE_LOG;
 extern bool KERNEL_PERFORMANCE_LOG;
+extern bool FEATURE_EXTRACTION;    //!< Extract structural features of ordered matrices and log them | Default = false.
 
 enum TensorType
 {

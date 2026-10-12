@@ -34,8 +34,13 @@ public:
         avgBandwidth = 0;
         no_empty_bins = 0;
         geo_mean_nnz = 0;
+        no_bins = 0;
+        mean_nnz = 0;
+        median_nnz = 0;
+        kernelTimes = nullptr;
         for (int i = 0; i < NROWBLOCKS; i++)
             rowBlockEfficiency[i] = 0;
+        xHitL1 = xHitL2 = xHitL3 = 0;
         if (no_kernels > 0)
         {
             kernelTimes = new double[no_kernels];
@@ -67,6 +72,9 @@ public:
     double normalizedColSpan;
 
     double rowBlockEfficiency[NROWBLOCKS];
+
+    double xHitL1, xHitL2, xHitL3;    //!< predicted x-vector hit ratio for L1 / L2 / L3
+    std::vector<double> reuseCDF;     //!< reuse distance cdf, see MatrixFeatureExtractor::reuseDistanceCDF
 };
 
 /*!

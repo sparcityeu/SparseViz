@@ -19,6 +19,7 @@
 #include "json.hpp"
 #include "SparseMatrix.h"
 #include "KernelResult.h"
+#include "MatrixFeatureExtractor.h"
 
 std::string stat_to_html_table(const MatrixOrdering &o, const Statistic &stat)
 {
@@ -128,6 +129,23 @@ std::string stat_to_html_table(const MatrixOrdering &o, const Statistic &stat)
         stream.str(std::string());
     }
     table << "</tr>\n";
+    if (!stat.reuseCDF.empty())
+    {
+        table << "<thead>\n<tr>\n";
+        table << "<th align=\"left\" bgcolor=\"#FFD3D3\" color=\"white\" scope=\"col\">x hits (SpMV, approx.)</th>\n";
+        table << "<th align=\"left\" bgcolor=\"#FFD3D3\" color=\"white\" scope=\"col\">L1 32KB</th>\n";
+        table << "<th align=\"left\" bgcolor=\"#FFD3D3\" color=\"white\" scope=\"col\">L2 512KB</th>\n";
+        table << "<th align=\"left\" bgcolor=\"#FFD3D3\" color=\"white\" scope=\"col\">L3 32MB</th>\n";
+        table << "</tr>\n</thead>\n<tbody>\n<tr>\n";
+        table << "<th scope=\"row\" bgcolor=\"#D3D3D3\" color=\"white\" align=\"left\">predicted</th>\n";
+        for (double hit: {stat.xHitL1, stat.xHitL2, stat.xHitL3})
+        {
+            stream << std::fixed << std::setprecision(1) << 100.0 * hit << "%";
+            table << "<td data-title=\"hit\" data-type=\"number\" align=\"right\">" << stream.str() << "</td>\n";
+            stream.str(std::string());
+        }
+        table << "</tr>\n";
+    }
     table << "</table>\n";
     
     auto results = o.getKernelResults();
@@ -460,13 +478,27 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
         } 
     }
 
+    // reuse distance curve of x accesses for each ordering (only with FEATURE_EXTRACTION)
+    for (int n = 0; n < norder && FEATURE_EXTRACTION; n++)
+    {
+        SparseMatrix ordered = matrix.generateOrderedMatrix(orderings[n]->getRowIPermutation(), orderings[n]->getColIPermutation(), orderings[n]->getOrderingName());
+        stats[n].reuseCDF = MatrixFeatureExtractor::reuseDistanceCDF(ordered);
+        auto hitAt = [&](unsigned long long lines)
+        {
+            int k = (int) std::round(std::log2((double) lines));
+            return (k >= 0 && k < (int) stats[n].reuseCDF.size()) ? stats[n].reuseCDF[k] : 0.0;
+        };
+        stats[n].xHitL1 = hitAt(MatrixFeatureExtractor::L1_LINES);
+        stats[n].xHitL2 = hitAt(MatrixFeatureExtractor::L2_LINES);
+        stats[n].xHitL3 = hitAt(MatrixFeatureExtractor::L3_LINES);
+    }
+
     double end_time = omp_get_wtime();
 
     for (int i = 0; i != norder; ++i)
     {
         stats[i].matrixName = orderings[i]->getMatrix().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     std::string filePath;
@@ -529,6 +561,37 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
     
     html_file << "</div>"; // Close right header div
     html_file << "</div>"; // Close header div
+
+    // cache hit plot, one curve per ordering
+    if (FEATURE_EXTRACTION)
+    {
+    html_file << "<div id='cacheDiv' style='width: 92%; height: 430px; margin: 15px auto; box-shadow: 5px 5px 10px rgba(0,0,0,0.3);'></div>\n";
+    html_file << "<script>\nvar cacheData = [];\n";
+    for (int n = 0; n < norder; n++)
+    {
+        html_file << "cacheData.push({name: '" << escapeSingleQuote(orderings[n]->getOrderingName()) << "', mode: 'lines+markers', x: [";
+        for (size_t k = 0; k < stats[n].reuseCDF.size(); ++k) html_file << (k ? "," : "") << (std::pow(2.0, (double) k) * 64.0 / 1024.0);
+        html_file << "], y: [";
+        for (size_t k = 0; k < stats[n].reuseCDF.size(); ++k) html_file << (k ? "," : "") << stats[n].reuseCDF[k];
+        html_file << "]});\n";
+    }
+    html_file << R"(var cacheLayout = {
+      title: 'SpMV x-vector cache hit ratio per ordering (simple reuse distance model, approximate)',
+      xaxis: {title: 'cache size (KB, log scale)', type: 'log'},
+      yaxis: {title: 'hit ratio', range: [0, 1.05]},
+      shapes: [ {type: 'line', x0: 1.50515, x1: 1.50515, y0: 0, y1: 1, line: {dash: 'dot', color: 'gray'}},
+                {type: 'line', x0: 2.70927, x1: 2.70927, y0: 0, y1: 1, line: {dash: 'dot', color: 'gray'}},
+                {type: 'line', x0: 4.51545, x1: 4.51545, y0: 0, y1: 1, line: {dash: 'dot', color: 'gray'}} ],
+      annotations: [ {x: 1.50515, y: 1.0, text: 'L1 32KB', showarrow: false, yanchor: 'bottom'},
+                     {x: 2.70927, y: 1.0, text: 'L2 512KB', showarrow: false, yanchor: 'bottom'},
+                     {x: 4.51545, y: 1.0, text: 'L3 32MB', showarrow: false, yanchor: 'bottom'} ],
+      legend: {orientation: 'h', y: -0.22},
+      margin: {t: 70}
+    };
+    Plotly.newPlot('cacheDiv', cacheData, cacheLayout);
+    </script>
+    )";
+    }
 
     for (int n = 0; n < norder; n++)
     {

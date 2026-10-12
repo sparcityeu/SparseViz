@@ -28,6 +28,7 @@ TensorType TENSOR_STORAGE_TYPE;
 BlockType BLOCK_SIZE;
 bool ORDERING_PERFORMANCE_LOG = false;
 bool KERNEL_PERFORMANCE_LOG = false;
+bool FEATURE_EXTRACTION = false;
 
 ConfigFileReader::ConfigFileReader(const std::string& configFile)
 :   m_Engine(nullptr)
@@ -386,6 +387,10 @@ void ConfigFileReader::readSetting(const std::string& line)
     else if (lineSplitted[0] == "KERNEL_PERFORMANCE_LOG")
     {
         KERNEL_PERFORMANCE_LOG = (lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
+    }
+    else if (lineSplitted[0] == "FEATURE_EXTRACTION")
+    {
+        FEATURE_EXTRACTION = (lineSplitted[1] == "TRUE" || lineSplitted[1] == "true" || lineSplitted[1] == "ENABLED" || lineSplitted[1] == "enabled");
     }
 }
 

@@ -245,6 +245,11 @@ private:
     void runMatrixKernels();
 
     /*!
+     * @brief Extracts the structural features of every (ordered) matrix and hands them to the logger. Runs only when FEATURE_EXTRACTION is enabled.
+     */
+    void runMatrixFeatureExtraction();
+
+    /*!
      * @brief Runs all tensor kernels.
      */
     void runTensorKernels();

@@ -41,6 +41,7 @@ include_directories(include/Matrix)
 include_directories(include/Matrix/Base)
 include_directories(include/Matrix/Orderings)
 include_directories(include/Matrix/Visualization)
+include_directories(include/Matrix/Features)
 include_directories(include/Tensor)
 include_directories(include/Tensor/Base)
 include_directories(include/Tensor/Orderings)
@@ -87,6 +88,7 @@ set(COMMON_HEADER_FILES
         include/Matrix/Base/SparseMatrix.h
         include/helpers.h
         include/Matrix/Visualization/MatrixVisualizer.h
+        include/Matrix/Features/MatrixFeatureExtractor.h
         include/json.hpp
         include/Parameters.h
         include/Matrix/Orderings/NaturalOrdering.h
@@ -134,6 +136,7 @@ set(COMMON_SOURCE_FILES
         src/Matrix/Base/SparseMatrix.cpp
         src/helpers.cpp
         src/Matrix/Visualization/MatrixVisualizer.cpp
+        src/Matrix/Features/MatrixFeatureExtractor.cpp
         src/Parameters.cpp
         src/Matrix/Orderings/NaturalOrdering.cpp
         src/Matrix/Orderings/RCMOrdering.cpp

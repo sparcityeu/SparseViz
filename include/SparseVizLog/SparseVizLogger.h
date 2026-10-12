@@ -15,6 +15,7 @@ class TensorOrdering;
 struct KernelResult;
 struct GPUKernelResult;
 struct Statistic;
+struct MatrixFeatures;
 struct TStatistic;
 
 class SparseVizLogger
@@ -44,6 +45,7 @@ public:
     void logRunningGPUTensorKernel(const GPUKernelResult& kernelResult, TensorOrdering* ordering);
 
     void logMatrixProcessing(const std::string& filename, const Statistic& stat, double duration);
+    void logMatrixFeatures(const std::string& matrixName, const std::string& orderingName, const MatrixFeatures& features, double duration);
     void logTensorProcessing(const std::string& filename, const TStatistic& stat, double duration);
 
     void makeSilentLog(std::string message, double time = 0);
@@ -91,6 +93,8 @@ private:
     std::vector<std::vector<double>> m_DurationsForEachTensorKernel;
 
     std::vector<std::string> m_MatrixProcessing;
+    std::vector<std::string> m_MatrixFeatures;
+    std::string m_MatrixFeaturesHeader;
     std::vector<std::string> m_TensorProcessing;
 
     std::vector<std::string> m_Others;

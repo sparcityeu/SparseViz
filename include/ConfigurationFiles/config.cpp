@@ -185,9 +185,18 @@ void ConfigFileReader::readConfigFile()
         auto splitted = split(readMatrix, '.');
         names.emplace_back(split(splitted[splitted.size() - 2], '/').back());
     }
-    std::vector<SuiteSparseDownloader::MatrixInfo> matrices = downloader.getMatrices(filter);
-    downloader.downloadMatrices(MATRIX_FILES_DIR, matrices);
+    std::vector<SuiteSparseDownloader::MatrixInfo> matrices;
+    try
+    {
+        matrices = downloader.getMatrices(filter);
+        downloader.downloadMatrices(MATRIX_FILES_DIR, matrices);
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << "WARNING: SuiteSparse lookup failed (" << e.what() << "), only local matrix files will be used." << std::endl;
+    }
 
+    std::vector<std::string> localMatrices = m_Matrices;
     m_Matrices.clear();
     for (const auto& downloadedMatrix: matrices)
     {
@@ -198,6 +207,20 @@ void ConfigFileReader::readConfigFile()
         else
         {
             m_Matrices.emplace_back(downloadedMatrix.installationPath);
+        }
+    }
+    // keep local files that SuiteSparse does not know about
+    for (const auto& local: localMatrices)
+    {
+        std::string fileName = split(local, '/').back();
+        bool covered = false;
+        for (const auto& m: m_Matrices)
+        {
+            if (split(m, '/').back() == fileName) covered = true;
+        }
+        if (!covered && std::filesystem::exists(local))
+        {
+            m_Matrices.push_back(local);
         }
     }
 

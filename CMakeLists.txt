@@ -33,6 +33,11 @@ endif()
 # CURL
 find_package(CURL REQUIRED)
 
+# AMD and PaToH libraries
+find_library(AMD_LIBRARY NAMES amd PATHS "${CMAKE_SOURCE_DIR}/lib" REQUIRED)
+find_library(PATOH_LIBRARY NAMES patoh PATHS "${CMAKE_SOURCE_DIR}/lib" REQUIRED)
+set(SPARSEVIZ_CONFIG_FILE "" CACHE FILEPATH "Config file to read RABBIT_LICENCE from (optional)")
+
 # Directories
 include_directories(lib)
 include_directories(include)
@@ -210,12 +215,15 @@ set(FILES
 )
 
 # Add Rabbit Files to All Files if Rabbit License is found
-file(READ "/home/delbek/sparseviz/deniz_matrix.config" configContent)
-string(REGEX MATCH "RABBIT_LICENCE = ([^\n]*)" _ ${configContent})
-set(rabbitLicence ${CMAKE_MATCH_1})
-string(STRIP ${rabbitLicence} rabbitLicence)
+set(rabbitLicence "None")
+if(EXISTS "${SPARSEVIZ_CONFIG_FILE}")
+    file(READ "${SPARSEVIZ_CONFIG_FILE}" configContent)
+    string(REGEX MATCH "RABBIT_LICENCE[ \\t]*=[ \\t]*([^\\r\\n]*)" _ "${configContent}")
+    set(rabbitLicence "${CMAKE_MATCH_1}")
+    string(STRIP "${rabbitLicence}" rabbitLicence)
+endif()
 
-if (NOT rabbitLicence STREQUAL "None")
+if (rabbitLicence AND NOT rabbitLicence STREQUAL "None" AND EXISTS "${CMAKE_SOURCE_DIR}/include/Matrix/Orderings/rabbit_order.hpp")
     add_definitions(-DRABBIT_AVAILABLE)
     list(APPEND FILES ${RABBIT_HEADER_FILES})
     list(APPEND FILES ${RABBIT_SOURCE_FILES})
@@ -247,8 +255,8 @@ set_target_properties(SparseViz PROPERTIES
 target_link_libraries(SparseViz PRIVATE
     CURL::libcurl
     stdc++
-    /home/delbek/sparseviz/lib/libpatoh.a
-    /home/delbek/sparseviz/lib/libamd.a
+    ${AMD_LIBRARY}
+    ${PATOH_LIBRARY}
     numa
     OpenMP::OpenMP_CXX
     $<$<BOOL:${MPI_FOUND}>:MPI::MPI_CXX>

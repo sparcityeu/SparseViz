@@ -9,7 +9,8 @@
 
 
 SparseTensorCOO::SparseTensorCOO(std::string name)
-:   SparseTensor(COO, name)
+:   SparseTensor(COO, name),
+    m_Storage(nullptr)
 {
 
 }
@@ -34,7 +35,7 @@ SparseTensorCOO::SparseTensorCOO(const SparseTensorCOO &other)
 }
 
 SparseTensorCOO::SparseTensorCOO(SparseTensorCOO &&other)
-:   SparseTensor(other)
+:   SparseTensor(std::move(other))
 {
     this->moveResources(&other);
 }
@@ -79,7 +80,9 @@ void SparseTensorCOO::moveResources(SparseTensor *other) noexcept
 
 SparseTensor *SparseTensorCOO::generateOrderedTensor(vType **orders, const std::string &orderingName, const std::vector<vType> &active_modes) const
 {
-    SparseTensorCOO* orderedTensor = new SparseTensorCOO(orderingName + "_ordered_" + this->getName(), m_Order, m_Dims, m_NNZ);
+    vType* orderedDims = new vType[m_Order];
+    memcpy(orderedDims, m_Dims, sizeof(vType) * m_Order);
+    SparseTensorCOO* orderedTensor = new SparseTensorCOO(orderingName + "_ordered_" + this->getName(), m_Order, orderedDims, m_NNZ);
 
     for(int m = 0; m < m_Order; m++)
     {

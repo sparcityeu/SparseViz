@@ -114,7 +114,7 @@ void SparseMatrix::deepCopy(const SparseMatrix &other)
     memcpy(m_Ind, other.m_Ind, sizeof(vType) * m_NNZCount);
 
     m_Values = new valType[m_NNZCount];
-    memcpy(m_Values, other.m_Values, sizeof(vType) * m_NNZCount);
+    memcpy(m_Values, other.m_Values, sizeof(valType) * m_NNZCount);
 }
 
 SparseMatrix::SparseMatrix(const SparseMatrix &other)
@@ -216,18 +216,26 @@ void SparseMatrix::checkSymmetry(bool adj_sorted)
         for(vType v = 0; v < m; v++) {
             for(vType ptr = ptrs[v]; ptr < ptrs[v+1]; ptr++) {
                 vType nbr = ids[ptr];
-                vType inbr = ids[tptrs[nbr]];
-                if((tptrs[nbr] == ptrs[nbr + 1]) || (inbr != v)) {
+                if(tptrs[nbr] == ptrs[nbr + 1]) {
                     m_IsSymmetric = false;
                     m_IsPatternSymmetric = false;
+                    delete [] tptrs;
+                    return;
+                }
+                vType inbr = ids[tptrs[nbr]];
+                if(inbr != v) {
+                    m_IsSymmetric = false;
+                    m_IsPatternSymmetric = false;
+                    delete [] tptrs;
                     return;
                 }
                 if(vals[ptr] != vals[tptrs[nbr]]) {
-                   m_IsPatternSymmetric = false;
+                    m_IsSymmetric = false;
                 }
                 tptrs[nbr]++;
             }
         }
+        delete [] tptrs;
     } else {   
         //lists are not sorted so we either need to look for the vertex in the adjacency list of the neighbor (easy to parallelize but expensive) 
         //or do the things below which first takes the transpose of the matrix 
@@ -243,6 +251,9 @@ void SparseMatrix::checkSymmetry(bool adj_sorted)
             if(tptrs[i] != ptrs[i]) {
                 m_IsSymmetric = false;
                 m_IsPatternSymmetric = false;
+                delete [] tptrs;
+                delete [] tids;
+                delete [] tvals;
                 return;
             }
         }
@@ -263,19 +274,26 @@ void SparseMatrix::checkSymmetry(bool adj_sorted)
         for(vType v = 0; v < n; v++) {
             for(vType ptr = tptrs[v]; ptr < tptrs[v+1]; ptr++) {
                 vType nbr = tids[ptr];
-                vType inbr = tids[t2ptrs[nbr]];
-
-                if((t2ptrs[nbr] == tptrs[nbr + 1]) || (inbr != v)) {
+                if(t2ptrs[nbr] == tptrs[nbr + 1]) {
                     m_IsSymmetric = false;
                     m_IsPatternSymmetric = false;
+                    delete [] tptrs; delete [] tids; delete [] tvals; delete [] t2ptrs;
+                    return;
+                }
+                vType inbr = tids[t2ptrs[nbr]];
+                if(inbr != v) {
+                    m_IsSymmetric = false;
+                    m_IsPatternSymmetric = false;
+                    delete [] tptrs; delete [] tids; delete [] tvals; delete [] t2ptrs;
                     return;
                 }
                 if(tvals[ptr] != tvals[t2ptrs[nbr]]) {
-                    m_IsPatternSymmetric = false;
+                    m_IsSymmetric = false;
                 }
                 t2ptrs[nbr]++;
             }
         }
+        delete [] tptrs; delete [] tids; delete [] tvals; delete [] t2ptrs;
     }   
 }
 
@@ -691,7 +709,7 @@ void SparseMatrix::generateOrderingSupportedMatrix()
     for(auto e : entries) sorted_entries[os_ptrs[e.col]++] = e;
 
     //sort entries with respect to rows - phase 1: counting / mark if duplicate
-    memset(os_ptrs, 0, sizeof(int) * (maxmn + 1));
+    memset(os_ptrs, 0, sizeof(vType) * (maxmn + 1));
     for(vType j = 0; j < entries.size(); j++) {
         auto &e = sorted_entries[j];
         if(last_ids[e.row] != e.col) {

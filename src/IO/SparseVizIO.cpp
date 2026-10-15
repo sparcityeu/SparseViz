@@ -21,7 +21,7 @@ SparseMatrix* SparseVizIO::readMatrixFromMarketFile(const std::string &marketFil
     // Checking whether it has already been read and saved to a binary file previously
     std::string binaryFileName = marketFileName + ".bin";
     std::vector<std::string> marketFileParsed = split(marketFileName, '.');
-    if (marketFileParsed.size() <= 1) throw std::runtime_error("Your matrix file name should have a file extension of .mtx");
+    if (marketFileParsed.size() <= 1 || marketFileParsed.back()!="mtx") throw std::runtime_error("Your matrix file name should have a file extension of .mtx");
     std::string matrixName = split(marketFileParsed[marketFileParsed.size() - 2], '/').back();
 
     SparseMatrix* matrix = SparseVizIO::readMatrixFromBinaryFile(binaryFileName, matrixName);
@@ -239,7 +239,7 @@ bool SparseVizIO::readMatrixOrderingFromBinaryFile(const std::string& binaryFile
         *colIPermutation = new vType[nCol];
 
         fread(*rowIPermutation, sizeof(vType), nRow, fp);
-        fread(*colIPermutation, sizeof(vType), nRow, fp);
+        fread(*colIPermutation, sizeof(vType), nCol, fp);
 
         fclose(fp);
 
@@ -500,6 +500,7 @@ SparseTensor *SparseVizIO::readTensorFromBinaryFile(const std::string &binaryFil
     SparseTensor* tensor = new SparseTensorCOO(name, order, dims, nnz);
     fread(tensor->getValues(), sizeof(valType), nnz, fp);
     fread(dynamic_cast<SparseTensorCOO*>(tensor)->getStorage(), sizeof(vType), nnz * order, fp);
+    fclose(fp);
 
     double end_time = omp_get_wtime();
 
@@ -525,7 +526,7 @@ void SparseVizIO::writeOrderedTensorToBinaryFile(SparseTensor *tensor)
 bool SparseVizIO::readTensorOrderingFromBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType**& orderedDimensions)
 {
     FILE *fp = nullptr;
-    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
+    if ((fp = fopen(binaryFileName.c_str(), "rb")) != nullptr)
     {
         orderedDimensions = new vType*[norder];
         for (vType i = 0; i < norder; ++i)
@@ -542,7 +543,7 @@ bool SparseVizIO::readTensorOrderingFromBinaryFile(const std::string &binaryFile
 void SparseVizIO::writeTensorOrderingToBinaryFile(const std::string &binaryFileName, vType norder, vType* dims, vType** orderedDimensions)
 {
     FILE *fp = nullptr;
-    if ((fp = fopen(binaryFileName.c_str(), "r")) != nullptr)
+    if ((fp = fopen(binaryFileName.c_str(), "wb")) != nullptr)
     {
         for (vType i = 0; i < norder; ++i)
         {

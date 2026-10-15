@@ -7,7 +7,11 @@
 
 SparseTensor::SparseTensor(TensorType tensorType, std::string name)
 :   m_TensorType(tensorType),
-    m_Name(name)
+    m_Name(name),
+    m_NNZ(0),
+    m_Order(0),
+    m_Dims(nullptr),
+    m_Vals(nullptr)
 {
 
 }

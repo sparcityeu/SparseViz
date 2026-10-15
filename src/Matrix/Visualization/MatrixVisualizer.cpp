@@ -366,7 +366,7 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
                 stats[n].avgBandwidth += fixedBW;
                 stats[n].maxBandwidth = std::max(stats[n].maxBandwidth, fixedBW);
                 int normalizer = std::abs(dmax - (d0d1ratio * orderedY + d1d0ratio * orderedX));
-                stats[n].normalizedBandwidth += ((double)fixedBW) / std::max((int)(rowPtr[row + 1] - rowPtr[row + 1]), (int)(colDegrees[col]));
+                stats[n].normalizedBandwidth += ((double)fixedBW) / std::max((int)(rowPtr[row + 1] - rowPtr[row]), (int)(colDegrees[col]));
             }
 
             if (rowPtr[row + 1] - rowPtr[row] != 0)
@@ -1026,6 +1026,11 @@ void visualizeMatrixOrderings(MatrixOrdering **orderings, int norder)
     )";
     html_file.close();
 
+    for (int i = 0; i != norder; ++i)
+    {
+        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+    }
+
     // CleanUp
     for (int n = 0; n < norder; n++)
     {
@@ -1191,8 +1196,8 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
             int binXhalf = binXp * ((vis_dims[n][0] + 1) / 2);
             int binXdouble = binXp * (vis_dims[n][0] * 2);
 
-            int minY = dims[n][0];
-            int maxY = 0;
+            int minY = dims[n][1];
+            int maxY = -1;
             int nonzeroCountForRow = 0;
 
             for (int idx = rowPtrs[n][row]; idx < rowPtrs[n][row + 1]; ++idx)
@@ -1227,7 +1232,7 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
                 stats[n].avgBandwidth += fixedBW;
                 stats[n].maxBandwidth = std::max(stats[n].maxBandwidth, fixedBW);
                 int normalizer = std::abs(dmax - (d0d1ratio * orderedY + d1d0ratio * orderedX));
-                stats[n].normalizedBandwidth += ((double)fixedBW) / std::max((int)(rowPtrs[n][row + 1] - rowPtrs[n][row + 1]), (int)(colDegrees[col]));
+                stats[n].normalizedBandwidth += ((double)fixedBW) / std::max((int)(rowPtrs[n][row + 1] - rowPtrs[n][row]), (int)(colDegrees[col]));
             }
 
             if (rowPtrs[n][row + 1] - rowPtrs[n][row] != 0)
@@ -1327,7 +1332,6 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
     {
         stats[i].matrixName = orderings[i]->getMatrix().getName();
         stats[i].orderingName = orderings[i]->getOrderingName();
-        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
     }
 
     std::string filePath;
@@ -1898,6 +1902,11 @@ void visualizeMatrices(MatrixOrdering **orderings, int norder)
     </html>
     )";
     html_file.close();
+
+    for (int i = 0; i != norder; ++i)
+    {
+        logger->logMatrixProcessing(MATRIX_VISUALIZATION_FILES_DIR + filename + ".html", stats[i], end_time - start_time);
+    }
 
     // CleanUp
     for (int n = 0; n < norder; n++)

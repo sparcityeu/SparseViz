@@ -319,9 +319,9 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         {
             csvFile << "Thread Number: " << std::to_string(*i) << '\t';
         }
-        if (!m_MatrixOrderingResults.empty())
+        if (!m_MatrixKernelResults.empty())
         {
-            for (const auto& result: m_MatrixOrderingResults[0])
+            for (const auto& result: m_MatrixKernelResults[0])
             {
                 csvFile << result.first << '\t';
             }
@@ -347,9 +347,9 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
                     csvFile << "-\t";
                 }
             }
-            if (!m_MatrixOrderingResults.empty())
+            if (a < m_MatrixKernelResults.size())
             {
-                for (const auto& result: m_MatrixOrderingResults[a])
+                for (const auto& result: m_MatrixKernelResults[a])
                 {
                     csvFile << result.second.second << '\t';
                 }
@@ -368,9 +368,9 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
         {
             csvFile << "Thread Number: " << std::to_string(*i) << '\t';
         }
-        if (!m_TensorOrderingResults.empty())
+        if (!m_TensorKernelResults.empty())
         {
-            for (const auto& result: m_TensorOrderingResults[0])
+            for (const auto& result: m_TensorKernelResults[0])
             {
                 csvFile << result.first << '\t';
             }
@@ -396,9 +396,9 @@ void SparseVizLogger::createCSVFile(const std::string& filePath)
                     csvFile << "-\t";
                 }
             }
-            if (!m_TensorOrderingResults.empty())
+            if (a < m_TensorKernelResults.size())
             {
-                for (const auto& result: m_TensorOrderingResults[a])
+                for (const auto& result: m_TensorKernelResults[a])
                 {
                     csvFile << result.second.second << '\t';
                 }

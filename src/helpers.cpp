@@ -6,14 +6,14 @@ vType calculateBin(vType coordinate, vType dimSize, vType numBins)
     if (dimSize == 0 || numBins == 0)
     {
         std::cerr << "Error: Division by zero in calculateBin function. dimSize: " << dimSize << ", numBins: " << numBins << std::endl;
-        return -1;
+        return 0;
     }
 
     vType binSize = dimSize / numBins; // integer division
     if (binSize == 0)
     {
         std::cerr << "Error: binSize is zero. dimSize: " << dimSize << ", numBins: " << numBins << std::endl;
-        return -1;
+        return 0;
     }
 
     vType bin = coordinate / binSize; // integer division

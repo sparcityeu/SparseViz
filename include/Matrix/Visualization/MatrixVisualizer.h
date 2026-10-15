@@ -34,6 +34,10 @@ public:
         avgBandwidth = 0;
         no_empty_bins = 0;
         geo_mean_nnz = 0;
+        no_bins = 0;
+        mean_nnz = 0;
+        median_nnz = 0;
+        kernelTimes = nullptr;
         for (int i = 0; i < NROWBLOCKS; i++)
             rowBlockEfficiency[i] = 0;
         if (no_kernels > 0)
